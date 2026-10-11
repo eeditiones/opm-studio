@@ -28,6 +28,11 @@ export interface ChunkRun { files: string[]; landing: string }
 /** Chunk root/xml into HTML pages below the absolute folder out. */
 export const chunk = (root: string, xml: string, out: string): ChunkRun => JSON.parse(fn<[string, string, string], string>('chunk')(root, xml, out));
 
+/** Write a web or print page with the assets its template links below out; null when it links none. */
+export function pageSite(root: string, mode: Mode, page: string, html: string, out: string): ChunkRun | null {
+  const r = fn<[string, Mode, string, string, string], string | undefined>('page_site')(root, mode, page, html, out);
+  return r ? JSON.parse(r) : null;
+}
 /** Build the documentation site for root/odd below out; null when the TEI schema must be installed first. */
 export function documentOdd(root: string, odd: string, out: string): ChunkRun | null {
   const r = JSON.parse(fn<[string, string, string], string>('document_odd')(root, odd, out));

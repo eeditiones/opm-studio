@@ -3,7 +3,7 @@ import { setMode } from '../actions.ts';
 import { EXT, PREVIEW, TEMPLATE_KIND, type Mode } from '../config.ts';
 import { base, config, oddPath, projectFiles, readText, snapshot, writeFile } from '../project/fs.ts';
 import { setToml, tomlString, unsetToml } from '../project/toml.ts';
-import { chunk, convert, ready } from '../runtime/opm.ts';
+import { chunk, convert, pageSite, ready } from '../runtime/opm.ts';
 import { documentOdd } from '../runtime/docs.ts';
 import { py } from '../runtime/pyodide.ts';
 import { toZip } from '../project/zip.ts';
@@ -140,6 +140,7 @@ function showResult({ mode, name, result }: Result): void {
   // keep the scroll position when the same file is regenerated
   const key = mode + ':' + name;
   const scroll = viewer && viewerKey === key ? viewer.scrollSnapshot() : null;
+  const pageY = pageFrame && pageKey === key ? frameScroll(pageFrame) : 0;
   viewer?.destroy(); viewer = null;
   clearOut();
   const my = seq;
@@ -159,10 +160,36 @@ function showResult({ mode, name, result }: Result): void {
   } else if (mode === 'markdown' && rendered) {
     markdownFrame(result).then(f => { if (my === seq) showOnPaper(f); }, err => { if (my === seq) showError(String(err)); });
   } else if (rendered) {
-    showOnPaper(el('iframe', { srcdoc: result }));
+    showPage(mode, name, result, key, pageY, my);
   } else {
     showSource(result, mode, key, scroll);
   }
+}
+
+// ── web and print pages: on their own, or with the assets their template links ──
+let pageFrame: HTMLIFrameElement | null = null, pageKey = '';
+const frameScroll = (f: HTMLIFrameElement) => { try { return f.contentWindow?.scrollY ?? 0; } catch { return 0; } };
+
+/**
+ * Show a rendered page. When its template links assets ([transform.web] assets),
+ * they are copied beside it as `opm transform -o` does, and the page is served
+ * with them through the service worker; otherwise it needs nothing beside it.
+ */
+function showPage(mode: Mode, name: string, html: string, key: string, y: number, my: number): void {
+  const page = name.replace(/\.[^.]+$/, '') + '.html', out = '/tmp/opm-page/' + state.project;
+  let s;
+  try { s = pageSite(state.dir, mode, page, html, out); }
+  catch (err) { showError(String(err).split('\n').filter(Boolean).slice(-2).join('\n')); return; }
+  const show = (frame: HTMLIFrameElement) => {
+    // regenerated: back to where the reader was
+    if (y) frame.addEventListener('load', () => frame.contentWindow?.scrollTo(0, y), { once: true });
+    pageFrame = frame; pageKey = key;
+    showOnPaper(frame);
+  };
+  if (!s) { show(el('iframe', { srcdoc: html })); return; }
+  const { files } = s, read = (p: string) => py.FS.readFile(out + '/' + p) as Uint8Array;
+  publishSite(files, read).then(base => { if (my === seq) show(el('iframe', { src: base + page })); },
+    err => { if (my === seq) showError(String(err)); });
 }
 
 let site: { frame: HTMLIFrameElement; base: string } | null = null;

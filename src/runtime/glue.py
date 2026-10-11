@@ -59,6 +59,28 @@ def chunk(root, xml, out):
     return _site(out)
 
 
+def page_site(root, mode, page, html, out):
+    """Write html as out/page with the assets its template links, as `opm transform -o` does.
+
+    Returns the site as JSON, or None when the mode's template declares no
+    assets: then the page needs nothing beside it.
+    """
+    from opm.assets import copy_assets
+    from opm.output_modes import output_mode
+    from opm.transform import template_assets
+    root = Path(root)
+    project = Project.load(root / 'opm.toml')
+    assets = template_assets(output_mode(mode), project.config)
+    if not assets:
+        return None
+    reset_dir(out)
+    (Path(out) / page).write_text(html, encoding='utf-8')
+    copy_assets(project.root, assets, Path(out))
+    site = json.loads(_site(Path(out)))
+    site['landing'] = page
+    return json.dumps(site)
+
+
 def _site(out):
     """The files below out and the page to open first, as JSON."""
     files = sorted(str(p.relative_to(out)) for p in out.rglob('*') if p.is_file())

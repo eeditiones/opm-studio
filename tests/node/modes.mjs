@@ -30,6 +30,17 @@ for (const ex of ['jats', 'shakespeare']) {
   } else console.log('chunk', ex, `${pages.length} pages, ${run.files.length} files`);
 }
 
+// a web page with the assets its template links ([transform.web] assets), as the rendered preview serves it
+{
+  const sample = py.globals.get('copy_example')('/proj-serafin', 'serafin', true);
+  const html = py.globals.get('convert')('/proj-serafin', sample, 'web');
+  const site = JSON.parse(py.globals.get('page_site')('/proj-serafin', 'web', 'page.html', html, '/tmp/page-serafin'));
+  const want = ['assets/letter.css', 'assets/parchment.jpg', 'page.html'];
+  if (want.some(f => !site.files.includes(f)) || site.landing !== 'page.html' || !html.includes('assets/letter.css')) {
+    console.log('page assets FAIL', JSON.stringify(site)); process.exitCode = 1;
+  } else console.log('page assets', site.files.join(', '));
+}
+
 // ODD documentation through glue.py, as the ODD editor's Document button calls it
 for (const [ex, odd] of [['jats', 'odd/jats.odd'], ['shakespeare', null]]) {
   const dir = '/proj-' + ex;
