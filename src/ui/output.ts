@@ -273,7 +273,8 @@ function refreshTemplates(): void {
   const sel = $<HTMLSelectElement>('tpl');
   sel.replaceChildren(new Option('opm default', ''));
   const suffix = kind === 'html' ? /\.html\.j2$/ : /\.typ\.j2$/;
-  for (const p of projectFiles().filter(p => suffix.test(p))) sel.append(new Option(p, p));
+  // opm/ holds the base templates the others extend (opm init --base): not pages of their own
+  for (const p of projectFiles().filter(p => suffix.test(p) && !/(^|\/)opm\//.test(p))) sel.append(new Option(p, p));
   const cur = tomlString(config(), 'transform.' + state.mode, 'template');
   if (cur && ![...sel.options].some(o => o.value === cur)) sel.append(new Option(cur + ' (missing)', cur));
   sel.value = cur;

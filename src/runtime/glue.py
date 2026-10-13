@@ -29,14 +29,14 @@ def remove_path(p):
 
 # Projects made here never get README.md, AGENTS.md, CLAUDE.md or .gitignore:
 # they live in the browser, not in a repository.
-def init_project(d, vocab, templates):
+def init_project(d, vocab, templates, base=False):
     reset_dir(d)
-    return scaffold(InitOptions(directory=Path(d), vocabulary=vocab, templates=bool(templates), bare=True)).sample_path
+    return scaffold(InitOptions(directory=Path(d), vocabulary=vocab, templates=bool(templates), base=bool(base), bare=True)).sample_path
 
 
-def copy_example(d, name, templates):
+def copy_example(d, name, templates, base=False):
     reset_dir(d)
-    return scaffold(InitOptions(directory=Path(d), example=name, templates=bool(templates), bare=True)).sample_path
+    return scaffold(InitOptions(directory=Path(d), example=name, templates=bool(templates), base=bool(base), bare=True)).sample_path
 
 
 def convert(root, xml, mode):

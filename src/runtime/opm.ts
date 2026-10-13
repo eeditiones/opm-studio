@@ -14,9 +14,9 @@ export const listVocabularies = (): Vocabulary[] => JSON.parse(fn<[], string>('l
 export const resetDir = fn<[dir: string], void>('reset_dir');
 export const removePath = fn<[path: string], void>('remove_path');
 /** Scaffold an empty project; returns its sample document, relative to dir. */
-export const initProject = fn<[dir: string, vocabulary: string, templates: boolean], string>('init_project');
+export const initProject = fn<[dir: string, vocabulary: string, templates: boolean, base: boolean], string>('init_project');
 /** Copy a bundled example; returns its sample document, relative to dir. */
-export const copyExample = fn<[dir: string, example: string, templates: boolean], string>('copy_example');
+export const copyExample = fn<[dir: string, example: string, templates: boolean, base: boolean], string>('copy_example');
 
 /** Transform root/xml in the given mode: text for text formats, bytes for epub and docx. */
 export function convert(root: string, xml: string, mode: Mode): string | Uint8Array {
