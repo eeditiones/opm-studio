@@ -14,6 +14,8 @@ import { setStatus } from './status.ts';
 
 export function showStart(on: boolean): void {
   $('start').classList.toggle('on', on);
+  // the project's own controls in the top bar would act on a project that is not on screen
+  document.body.classList.toggle('starting', on);
   $('start-close').hidden = !state.project;
   if (on) void refreshProjectList();
 }
@@ -33,14 +35,14 @@ export async function openSaved(name: string): Promise<void> {
 }
 
 async function createProject(kind: 'example' | 'vocab', what: string): Promise<void> {
-  const all = $<HTMLInputElement>('all-tpl').checked, cards = document.querySelectorAll<HTMLButtonElement>('.card');
+  const all = $<HTMLInputElement>('all-tpl').checked, base = $<HTMLInputElement>('base-tpl').checked, cards = document.querySelectorAll<HTMLButtonElement>('.card');
   cards.forEach(c => c.disabled = true);
   setStatus('Creating project…', 'busy');
   try {
     const name = await uniqueName($<HTMLInputElement>('new-name').value || (kind === 'example' ? what : what + '-project'));
     await persistNow(); state.project = null; // the old project is saved; scaffold into a fresh folder
     state.dir = '/projects/' + name;
-    const sample = (kind === 'example' ? copyExample : initProject)(state.dir, what, all);
+    const sample = (kind === 'example' ? copyExample : initProject)(state.dir, what, all, base);
     await openProject(name, snapshot(), { xml: sample });
     $<HTMLInputElement>('new-name').value = '';
   } catch (err) {
