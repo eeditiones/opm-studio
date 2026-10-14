@@ -1,6 +1,6 @@
-# OPM Garage
+# OPM Studio
 
-Transform XML with the Open Processing Model, entirely in the browser. Runs the `opm` wheel under Pyodide (CPython in WebAssembly); there is no server-side code. Live at https://wolfgangmm.github.io/opm-garage/.
+Transform XML with the Open Processing Model, entirely in the browser. Runs the `opm` wheel under Pyodide (CPython in WebAssembly); there is no server-side code. Live at https://wolfgangmm.github.io/opm-studio/.
 
     uv build --wheel ../tei-publisher-py -o dist     # the opm wheel the page installs
     npm install
@@ -43,6 +43,6 @@ Panes never call each other. An action changes `state` and emits what changed (`
 
 Copyright (C) 2026 e-editiones
 
-OPM Garage is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. See [LICENSE](LICENSE).
+OPM Studio is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. See [LICENSE](LICENSE).
 
 The opm logo is a trademark of its owners and is not covered by this licence.

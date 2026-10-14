@@ -1,6 +1,6 @@
 {
-  "name": "OPM Garage",
-  "short_name": "OPM Garage",
+  "name": "OPM Studio",
+  "short_name": "OPM Studio",
   "description": "Transform XML with the Open Processing Model, entirely in the browser.",
   "start_url": "./",
   "scope": "./",

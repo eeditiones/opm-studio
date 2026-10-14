@@ -1,4 +1,4 @@
-/* Palette and layout follow the Claude Design "Garage Workspace" proposal. */
+/* Palette and layout follow the Claude Design "Studio Workspace" proposal. */
 :root {
   --bg: #fbfaf6; --panel: #fff; --panel-2: #f7f5ef; --fg: #1f1d1a; --muted: #6b665c; --faint: #9a9385;
   --line: #e4dfd3; --line-2: #efebe2; --btn-line: #ddd7ca; --hover: #ede9df; --stage: #efece4;
