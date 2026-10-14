@@ -85,10 +85,14 @@ async function openFolder(): Promise<void> {
   }
 }
 
+let listGen = 0;
 async function refreshProjectList(): Promise<void> {
+  // overlapping refreshes (e.g. delete + closeProject) must not both append rows
+  const gen = ++listGen, projects = await listProjects();
+  if (gen !== listGen) return;
   const list = $('proj-list');
   list.replaceChildren();
-  for (const { name, updated } of await listProjects()) {
+  for (const { name, updated } of projects) {
     const open = el('button', { className: 'btn', textContent: 'Open', onclick: () => void openSaved(name) });
     const del = el('button', { className: 'btn', textContent: '✕', ariaLabel: 'Delete' });
     del.onclick = async () => {
