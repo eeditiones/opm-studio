@@ -21,8 +21,9 @@ export const highlightStyle = HighlightStyle.define([
 ]);
 
 const theme = EditorView.theme({
-  '&': { height: '100%', backgroundColor: 'var(--panel)', color: 'var(--fg)', fontSize: '12.5px' },
-  '.cm-scroller': { fontFamily: 'var(--mono)', lineHeight: '20px' },
+  '&': { height: '100%', backgroundColor: 'var(--panel)', color: 'var(--fg)', fontSize: 'var(--editor-size, 12.5px)' },
+  // --editor-* are set on the editor panel by ui/prefs.ts; elsewhere the defaults apply
+  '.cm-scroller': { fontFamily: 'var(--editor-font, var(--mono))', lineHeight: 'calc(var(--editor-size, 12.5px) * 1.6)' },
   '.cm-gutters': { backgroundColor: 'var(--panel)', color: 'var(--muted)', border: 'none' },
   '.cm-activeLine, .cm-activeLineGutter': { backgroundColor: 'color-mix(in srgb, var(--accent) 10%, transparent)' },
   '&.cm-focused': { outline: 'none' },
@@ -55,6 +56,10 @@ export interface Editor {
   replace(text: string): void;
 }
 
+const editors = new Set<EditorView>();
+/** Have the editors measure their lines again, after a font or size change. */
+export const remeasureEditors = (): void => editors.forEach(v => v.requestMeasure());
+
 export function createEditor(parent: HTMLElement, onChange: () => void): Editor {
   const lang = new Compartment();
   let silent = false;
@@ -68,6 +73,7 @@ export function createEditor(parent: HTMLElement, onChange: () => void): Editor 
       ],
     }),
   });
+  editors.add(view);
   return {
     getValue: () => view.state.doc.toString(),
     setValue(text, kind) {

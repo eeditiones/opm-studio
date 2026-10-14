@@ -272,14 +272,23 @@ main { flex: 1; min-height: 0; position: relative; display: grid; grid-template-
 #dlg input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 #dlg .actions { display: flex; justify-content: flex-end; gap: 8px; }
 #dlg .actions [hidden] { display: none; }
-#sync-dlg { border: 1px solid var(--line); border-radius: 10px; padding: 0; background: var(--panel); color: var(--fg); width: min(560px, calc(100vw - 32px)); box-shadow: 0 12px 40px rgba(0,0,0,.25); }
-#sync-dlg::backdrop { background: rgba(20,18,15,.45); }
-#sync-dlg form { padding: 20px 22px 16px; }
-#sync-dlg h2 { margin: 0 0 8px; font-size: 15px; font-weight: 600; }
-#sync-dlg p { margin: 0 0 14px; color: var(--muted); line-height: 1.5; }
+#sync-dlg, #prefs-dlg { border: 1px solid var(--line); border-radius: 10px; padding: 0; background: var(--panel); color: var(--fg); width: min(560px, calc(100vw - 32px)); box-shadow: 0 12px 40px rgba(0,0,0,.25); }
+#sync-dlg::backdrop, #prefs-dlg::backdrop { background: rgba(20,18,15,.45); }
+#sync-dlg form, #prefs-dlg form { padding: 20px 22px 16px; }
+#sync-dlg h2, #prefs-dlg h2 { margin: 0 0 8px; font-size: 15px; font-weight: 600; }
+#sync-dlg p, #prefs-dlg > form > p { margin: 0 0 14px; color: var(--muted); line-height: 1.5; }
 #sync-dlg .plist { max-height: 50vh; overflow-y: auto; margin-bottom: 18px; }
 #sync-dlg .plist .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#sync-dlg .actions { display: flex; justify-content: flex-end; gap: 8px; }
+#sync-dlg .actions, #prefs-dlg .actions { display: flex; justify-content: flex-end; gap: 8px; }
+#prefs-dlg { width: min(440px, calc(100vw - 32px)); }
+#prefs-dlg .field { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+#prefs-dlg .field[hidden] { display: none; }
+#prefs-dlg .field label { width: 6.5rem; flex: none; color: var(--muted); }
+#prefs-dlg .field select, #prefs-dlg .field input[type=text] { flex: 1; min-width: 0; }
+#prefs-dlg .size { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+#prefs-dlg input[type=number] { width: 5rem; height: 30px; padding: 0 .5rem; font: inherit; border: 1px solid var(--btn-line); border-radius: 6px; background: var(--panel); color: var(--fg); }
+#prefs-dlg .sample { margin: 6px 0 18px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); overflow-x: auto; white-space: pre; font-family: var(--editor-font, var(--mono)); font-size: var(--editor-size, 12.5px); }
+#prefs-dlg .actions { justify-content: space-between; }
 .btn.danger { background: var(--err); color: #fff; border-color: transparent; }
 .btn.danger:hover { filter: brightness(.9); border-color: transparent; }
 .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
