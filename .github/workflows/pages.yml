@@ -59,11 +59,16 @@ jobs:
         env:
           OPM_DIR: opm
 
+      - name: Build the documentation
+        working-directory: docs
+        run: npm ci && npm run build
+
       - name: Assemble the site
         run: |
           mkdir -p _site/dist
           cp index.html style.css sw.js manifest.webmanifest icon.svg icon*.png _site/
           cp dist/app.js dist/app.js.map dist/docworker.js dist/docworker.js.map dist/*.whl dist/p5all.xml.gz _site/dist/
+          cp -r docs/.vitepress/dist _site/docs
           touch _site/.nojekyll
 
       - uses: actions/upload-pages-artifact@v3

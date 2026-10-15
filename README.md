@@ -17,6 +17,11 @@ In Chrome, Edge and other Chromium browsers a project can also be kept in sync w
 
 Every push to `main` deploys to GitHub Pages (`.github/workflows/pages.yml`). The workflow builds the opm wheel from `eeditiones/open-processing-model` (`main` by default; run it by hand to pick another ref) and fails if the wheel's name differs from `WHEEL` in `src/config.ts`.
 
+The documentation site in `docs/` is built with VitePress and deployed with the app under `/docs/`. Pages are Markdown; the landing page is `docs/index.md`, the sidebar is set in `docs/.vitepress/config.mts`.
+
+    cd docs && npm install
+    npm run dev       # serves the docs with live reload
+
 ## Code layout
 
     src/main.ts           boot: wire the panes, load Python and opm, reopen the last project

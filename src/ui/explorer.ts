@@ -49,7 +49,7 @@ function renderPipeline(): void {
   if (!state.project) return;
   box.append(el('div', { className: 'cap', textContent: 'Pipeline' }));
   const f = pipelineFiles();
-  const rows: [string, string, string][] = [['Source', f.source, 'none'], ['ODD', f.odd, 'none'], ['CSS', f.css, 'none']];
+  const rows: [string, string, string][] = [['Source', f.source, 'none'], ['ODD', f.odd, 'none']];
   if (TEMPLATE_KIND[state.mode]) rows.push(['Template', f.template, 'opm default']);
   for (const [role, p, none] of rows) {
     const there = !!p && exists(p);

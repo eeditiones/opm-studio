@@ -1,0 +1,47 @@
+/* The app's palette and type (style.css), mapped onto VitePress's theme variables. */
+:root {
+  --vp-font-family-base: "Instrument Sans", system-ui, -apple-system, sans-serif;
+  --vp-font-family-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --vp-c-bg: #fbfaf6; --vp-c-bg-alt: #f7f5ef; --vp-c-bg-elv: #fff; --vp-c-bg-soft: #efece4;
+  --vp-c-text-1: #1f1d1a; --vp-c-text-2: #6b665c; --vp-c-text-3: #9a9385;
+  --vp-c-divider: #e4dfd3; --vp-c-border: #ddd7ca; --vp-c-gutter: #efebe2;
+  --vp-c-default-soft: #ede9df;
+
+  --vp-c-brand-1: #1e5e5a; --vp-c-brand-2: #184d4a; --vp-c-brand-3: #1e5e5a; --vp-c-brand-soft: #e3eeea;
+  --vp-button-brand-text: #fff; --vp-button-brand-hover-text: #fff; --vp-button-brand-active-text: #fff;
+
+  --vp-c-warning-1: #9a5b00; --vp-c-warning-soft: #fbf1d9;
+  --vp-c-danger-1: #b3261e;
+
+  --vp-home-hero-name-color: #f5a623; /* the orange of the logo */
+  --vp-code-color: #1e5e5a;
+}
+.dark {
+  --vp-c-bg: #171a19; --vp-c-bg-alt: #1b1f1d; --vp-c-bg-elv: #1f2321; --vp-c-bg-soft: #141716;
+  --vp-c-text-1: #e5e7e3; --vp-c-text-2: #9aa19c; --vp-c-text-3: #737a75;
+  --vp-c-divider: #333a36; --vp-c-border: #3d4541; --vp-c-gutter: #2a302d;
+  --vp-c-default-soft: #2a302d;
+
+  --vp-c-brand-1: #4fa89b; --vp-c-brand-2: #5fb8ab; --vp-c-brand-3: #4fa89b; --vp-c-brand-soft: #23342f;
+  --vp-button-brand-text: #0d1513; --vp-button-brand-hover-text: #0d1513; --vp-button-brand-active-text: #0d1513;
+
+  --vp-c-warning-1: #e0b45e; --vp-c-warning-soft: #2f2812;
+
+  --vp-code-color: #6cc1b5;
+}
+
+/* the app's buttons are squared off, not pills */
+.VPButton { border-radius: 6px !important; font-weight: 500; }
+:root, .dark {
+  --vp-button-alt-bg: var(--vp-c-bg-elv); --vp-button-alt-border: var(--vp-c-border); --vp-button-alt-text: var(--vp-c-text-1);
+  --vp-button-alt-hover-bg: var(--vp-c-bg-elv); --vp-button-alt-hover-border: var(--vp-c-brand-1); --vp-button-alt-hover-text: var(--vp-c-text-1);
+}
+.VPFeature { border-radius: 8px !important; border: 1px solid var(--vp-c-divider) !important; background-color: var(--vp-c-bg-elv) !important; }
+/* the top bar is a white panel with a hairline below, as in the app */
+.VPNavBar, .VPNavBar .content-body, .VPNavBar .title { background-color: var(--vp-c-bg-elv) !important; }
+.VPNavBar .divider-line { background-color: var(--vp-c-divider) !important; }
+.VPNavBar:not(.has-sidebar) { border-bottom: 1px solid var(--vp-c-divider); }
+.VPNavBar .title { font-weight: 600; }
+.VPHero .name { font-weight: 600; letter-spacing: -0.02em; }
+.vp-doc table { font-size: 14px; }
