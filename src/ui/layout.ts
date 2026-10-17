@@ -3,7 +3,8 @@ import { $ } from './dom.ts';
 import { ENLARGE, SHRINK } from './icons.ts';
 
 const open = { tree: true, out: true };
-let enlarged = false;
+// which pane, if any, covers the whole window
+let enlarged: 'src' | 'out' | null = null;
 
 // ── splitting: share of the source + output width taken by the output ────
 const SPLIT = 'opm-split';
@@ -14,17 +15,20 @@ function apply(): void {
   $('main').style.setProperty('--cols', `${open.tree ? '248px' : '40px'} minmax(0, ${open.out ? 1 - split : 1}fr) ${out}`);
   $('explorer').classList.toggle('collapsed', !open.tree);
   $('p-out').classList.toggle('collapsed', !open.out);
-  // ── enlarging: the output pane over the whole window ──
-  $('p-out').classList.toggle('enlarged', enlarged);
-  const btn = $('enlarge');
-  btn.innerHTML = enlarged ? SHRINK : ENLARGE;
-  btn.ariaLabel = enlarged ? 'Back to the editor (Esc)' : 'Enlarge output to the whole window';
-  btn.setAttribute('aria-pressed', String(enlarged));
+  // ── enlarging: one pane over the whole window ──
+  for (const [pane, id, what] of [['src', 'enlarge-src', 'source'], ['out', 'enlarge', 'output']] as const) {
+    const on = enlarged === pane;
+    $('p-' + pane).classList.toggle('enlarged', on);
+    const btn = $(id);
+    btn.innerHTML = on ? SHRINK : ENLARGE;
+    btn.ariaLabel = on ? 'Back to the editor (Esc)' : `Enlarge ${what} to the whole window`;
+    btn.setAttribute('aria-pressed', String(on));
+  }
 }
 
-function setEnlarged(on: boolean): void {
-  enlarged = on;
-  if (on) open.out = true;
+function setEnlarged(pane: 'src' | 'out' | null): void {
+  enlarged = pane;
+  if (pane === 'out') open.out = true;
   apply();
 }
 
@@ -53,9 +57,10 @@ export function initLayout(): void {
     // a click anywhere on a collapsed rail opens it again
     $(box).addEventListener('click', e => { if (!open[key] && (e.target as Element).closest('#' + box) === $(box)) { open[key] = true; apply(); } });
   }
-  $('enlarge').onclick = () => setEnlarged(!enlarged);
+  $('enlarge').onclick = () => setEnlarged(enlarged === 'out' ? null : 'out');
+  $('enlarge-src').onclick = () => setEnlarged(enlarged === 'src' ? null : 'src');
   // Esc inside the preview frame never reaches this page; the button is always there to leave
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && enlarged && !document.querySelector('dialog[open]')) setEnlarged(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && enlarged && !e.defaultPrevented && !document.querySelector('dialog[open]')) setEnlarged(null); });
   initSplitter();
   apply();
 }

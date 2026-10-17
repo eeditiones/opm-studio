@@ -128,12 +128,13 @@ main { flex: 1; min-height: 0; position: relative; display: grid; grid-template-
 .docs-progress progress { width: 100%; accent-color: var(--accent); }
 .docs-progress .hint { margin: 0; font-size: 12px; }
 
-/* enlarged output: the pane over the whole window */
-#p-out.enlarged { position: fixed; inset: 0; z-index: 300; border-left: 0; }
+/* enlarged source or output: the pane over the whole window */
+#p-src.enlarged, #p-out.enlarged { position: fixed; inset: 0; z-index: 300; border-left: 0; }
 #p-out.enlarged .splitter, #p-out.enlarged .cmdfoot, #p-out.enlarged #t-out { display: none; }
 #p-out.enlarged #out.stage { padding: 0; }
 #p-out.enlarged #out .paper { max-width: none; border-radius: 0; box-shadow: none; }
-#enlarge[aria-pressed=true] { color: var(--accent); }
+#p-src.enlarged { border-right: 0; }
+#enlarge[aria-pressed=true], #enlarge-src[aria-pressed=true] { color: var(--accent); }
 
 /* collapsed rails: files and output */
 #explorer.collapsed, #p-out.collapsed { cursor: pointer; background: var(--panel-2); }
