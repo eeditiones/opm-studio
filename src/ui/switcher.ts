@@ -30,9 +30,7 @@ async function openMenu(): Promise<void> {
   const projects = await listProjects();
   pop.replaceChildren(...projects.map(({ name }) => item(name, () => { if (name !== state.project) void openSaved(name); },
     { mono: true, checked: name === state.project })));
-  pop.append(el('hr'),
-    item('New project…', () => { showStart(true); $('new-name').focus(); }),
-    item('All projects…', () => showStart(true)));
+  pop.append(el('hr'), item('All projects…', () => showStart(true)));
   if (canUseFolders()) pop.append(el('hr'), state.folder
     ? item('Stop syncing with ' + state.folder.name, () => void confirmUnlink())
     : item('Sync with folder…', () => void chooseFolder()));
