@@ -13,30 +13,44 @@ const PREVIEW_CSS = /* css */ `
   --opm-paged-paper: #fff;
   --opm-paged-shadow: 0 1px 2px rgba(31, 29, 26, .10), 0 4px 10px rgba(31, 29, 26, .08), 0 12px 28px rgba(31, 29, 26, .10);
 }
-html, body {
-  margin: 0 !important;
-  max-width: none !important;
-  padding: 0 !important;
-  background: var(--opm-paged-bg) !important;
+@media screen {
+  html, body {
+    margin: 0 !important;
+    max-width: none !important;
+    padding: 0 !important;
+    background: var(--opm-paged-bg) !important;
+  }
+  .pagedjs_pages {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+  }
+  .pagedjs_page {
+    background: var(--opm-paged-paper) !important;
+    box-shadow: var(--opm-paged-shadow) !important;
+    border-radius: 2px;
+    margin: 12mm 0 0 !important;
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+  }
+  .pagedjs_page:first-of-type { margin-top: 12mm !important; }
+  .pagedjs_page:last-of-type { margin-bottom: 12mm !important; }
+  .pagedjs_first_page { margin-left: 0 !important; }
 }
-.pagedjs_pages {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  width: 100% !important;
-  margin: 0 auto !important;
+@media print {
+  html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+  .pagedjs_pages { display: block !important; width: auto !important; }
+  .pagedjs_page {
+    box-shadow: none !important;
+    border-radius: 0;
+    margin: 0 !important;
+    break-after: page;
+    page-break-after: always;
+  }
+  .pagedjs_page:last-of-type { break-after: auto; page-break-after: auto; }
 }
-.pagedjs_page {
-  background: var(--opm-paged-paper) !important;
-  box-shadow: var(--opm-paged-shadow) !important;
-  border-radius: 2px;
-  margin: 12mm 0 0 !important;
-  flex-shrink: 0 !important;
-  flex-grow: 0 !important;
-}
-.pagedjs_page:first-of-type { margin-top: 12mm !important; }
-.pagedjs_page:last-of-type { margin-bottom: 12mm !important; }
-.pagedjs_first_page { margin-left: 0 !important; }
 `;
 
 /** Message the preview frame posts to the app when pagination ends. */

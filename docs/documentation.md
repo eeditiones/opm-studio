@@ -52,7 +52,7 @@ Clicking an XML file in the `data` folder opens it and also makes it the documen
 
 ### Output formats
 
-Use the buttons at the top of the output pane to switch formats. **web** shows a single HTML page, **print** an HTML page laid out for printing (paged on screen with [Paged.js](https://pagedjs.org)), and **typst** a PDF. Formats that cannot be previewed, such as **epub** and **docx**, offer a download instead.
+Use the buttons at the top of the output pane to switch formats. **web** shows a single HTML page, **print** an HTML page laid out for printing (paged on screen with [Paged.js](https://pagedjs.org); **Print** opens the browser print dialog), and **typst** a PDF. Formats that cannot be previewed, such as **epub** and **docx**, offer a download instead.
 
 The **chunk** format is based on **web**, but produces complex output: it paginates one or more source documents, therefore producing an entire website of linked pages instead of just a single output.
 

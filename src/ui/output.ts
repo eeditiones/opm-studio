@@ -11,7 +11,7 @@ import { emit, on, state } from '../state.ts';
 import type { EditorView } from 'codemirror';
 import { createViewer, type EditorKind } from './codemirror.ts';
 import { $, download, el } from './dom.ts';
-import { DOWNLOAD } from './icons.ts';
+import { DOWNLOAD, PRINT } from './icons.ts';
 import { markdownFrame } from './previews/markdown.ts';
 import { compilePdf, typstLoaded } from './previews/pdf.ts';
 import { withPagedJs, type PagedMessage } from './previews/print.ts';
@@ -122,11 +122,19 @@ function showError(text: string): void {
   clearOut();
   $('out').append(el('pre', { className: 'err', textContent: text }));
 }
-const hideDownload = () => { $('download').hidden = true; };
+const hideDownload = () => { $('download').hidden = true; hidePrint(); };
 function setDownload(file: string, onclick: () => void): void {
   const dl = $<HTMLButtonElement>('download');
   dl.innerHTML = DOWNLOAD; dl.append(file); dl.dataset.tip = 'Download ' + file; dl.hidden = false;
   dl.onclick = onclick;
+}
+function hidePrint(): void { $('print').hidden = true; }
+/** Offer Print beside Download when the print preview is on screen. Disabled until pages are laid out. */
+function setPrint(ready: boolean): void {
+  const b = $<HTMLButtonElement>('print');
+  b.innerHTML = PRINT; b.append('Print');
+  b.dataset.tip = 'Open the browser print dialog for the paged preview. Set margins to none and match the paper size if the pages look scaled.';
+  b.hidden = false; b.disabled = !ready;
 }
 
 /** Show a preview on paper over a neutral ground, apart from the app's own chrome. */
@@ -158,6 +166,7 @@ function showResult({ mode, name, result }: Result): boolean {
   const file = name.replace(/\.[^.]+$/, '') + '.' + EXT[mode];
   const save = () => download(file, result as BlobPart, typeof result === 'string' ? 'text/plain' : 'application/octet-stream');
   setDownload(file, save);
+  hidePrint();
   const rendered = PREVIEW.has(mode) && state.view === 'rendered';
   if (typeof result !== 'string') {
     const card = el('div', { className: 'filecard' });
@@ -209,7 +218,7 @@ function showPage(mode: Mode, name: string, html: string, key: string, y: number
     const paper = showOnPaper(frame, paged ? 'paged' : 'page');
     if (paged) waitForPages(frame, paper, my);
   };
-  if (paged) setStatus('Laying out pages…', 'busy');
+  if (paged) { setPrint(false); setStatus('Laying out pages…', 'busy'); }
   if (!s) { show(el('iframe', { srcdoc: preview })); return paged; }
   const { files } = s, read = (p: string) => py.FS.readFile(out + '/' + p) as Uint8Array;
   publishSite(files, read).then(base => { if (my === seq) show(el('iframe', { src: base + page })); },
@@ -227,6 +236,7 @@ function waitForPages(frame: HTMLIFrameElement, paper: HTMLElement, my: number):
     clearTimeout(timer); pagedDone = null;
     over.remove(); paper.classList.remove('loading');
     if (my !== seq) return;
+    setPrint(true);
     if (m?.opmPaged === 'done') setStatus('Up to date · ' + (m.pages ?? '?') + ' pages');
     else if (m?.opmPaged === 'error') setStatus('Paged.js could not be loaded: showing the print output unpaged', 'err');
     else setStatus('Page layout did not report back: showing the print output as it is');
@@ -370,6 +380,7 @@ export function initOutput(): void {
     writeFile('opm.toml', v ? setToml(toml, sec, 'template', v) : unsetToml(toml, sec, 'template'));
     emit('files');
   };
+  $('print').onclick = () => { try { pageFrame?.contentWindow?.print(); } catch {} };
   $('copy-cmd').onclick = () => {
     try { void navigator.clipboard.writeText(($('cmd').textContent ?? '').replace(/^\$ /, '')); } catch {}
     $('copy-cmd').textContent = 'Copied';
