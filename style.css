@@ -304,11 +304,12 @@ main { flex: 1; min-height: 0; position: relative; display: grid; grid-template-
 /* splash: covers the app until Python, opm and the last project are loaded */
 #splash { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; background: var(--bg); transition: opacity .25s ease; }
 #splash.done { opacity: 0; pointer-events: none; }
-#splash .splash-box { display: flex; flex-direction: column; align-items: center; gap: 12px; width: min(280px, calc(100vw - 32px)); }
+#splash .splash-box { display: flex; flex-direction: column; align-items: center; gap: 12px; width: min(300px, calc(100vw - 32px)); }
 #splash .splash-name { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
 #splash .splash-bar { width: 100%; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
 #splash .splash-bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .4s ease; }
 #splash .splash-step { color: var(--muted); font-size: 12px; min-height: 1.4em; text-align: center; }
+#splash .splash-size { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; text-align: center; margin-top: -4px; }
 #splash .splash-note { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; text-align: center; }
 #splash.failed .splash-step { color: var(--err); }
 @media (prefers-reduced-motion: reduce) { #splash, #splash .splash-bar span { transition: none; } }
