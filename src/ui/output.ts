@@ -13,7 +13,8 @@ import { createViewer, type EditorKind } from './codemirror.ts';
 import { $, download, el } from './dom.ts';
 import { DOWNLOAD } from './icons.ts';
 import { markdownFrame } from './previews/markdown.ts';
-import { compilePdf } from './previews/pdf.ts';
+import { compilePdf, typstLoaded } from './previews/pdf.ts';
+import { withPagedJs, type PagedMessage } from './previews/print.ts';
 import { framePage, publishSite, servedByWorker } from './previews/site.ts';
 import { setStatus } from './status.ts';
 
@@ -53,8 +54,8 @@ async function run(): Promise<void> {
   const t = performance.now();
   try {
     last = { mode: state.mode, name: base(state.xml), result: state.mode === 'chunk' ? await chunkSite() : convert(state.dir, state.xml, state.mode) };
-    showResult(last);
-    setStatus('Up to date · ' + Math.round(performance.now() - t) + ' ms');
+    // a preview still loading (PDF, paged print) reports its own status when done
+    if (!showResult(last)) setStatus('Up to date · ' + Math.round(performance.now() - t) + ' ms');
   } catch (err) {
     last = null; hideDownload();
     showError(String(err).split('\n').filter(Boolean).slice(-4).join('\n'));
@@ -129,14 +130,24 @@ function setDownload(file: string, onclick: () => void): void {
 }
 
 /** Show a preview on paper over a neutral ground, apart from the app's own chrome. */
-function showOnPaper(frame: HTMLIFrameElement): void {
-  const paper = el('div', { className: 'paper' });
+function showOnPaper(frame: HTMLIFrameElement, kind: 'page' | 'paged' = 'page'): HTMLElement {
+  const paper = el('div', { className: kind === 'paged' ? 'paper paged' : 'paper' });
   paper.append(frame);
   $('out').classList.add('stage'); $('out').append(paper);
+  return paper;
 }
 
-function showResult({ mode, name, result }: Result): void {
-  if (typeof result === 'object' && 'base' in result) { showSite(result); return; }
+/** A centred box with an indeterminate progress bar, for previews that take a while. */
+function loadingBox(title: string, hint = ''): HTMLElement {
+  const box = el('div', { className: 'docs-progress' });
+  box.append(el('strong', { textContent: title }), el('progress'));
+  if (hint) box.append(el('p', { className: 'hint', textContent: hint }));
+  return box;
+}
+
+/** Show a result; true when its preview is still loading and will set the status itself. */
+function showResult({ mode, name, result }: Result): boolean {
+  if (typeof result === 'object' && 'base' in result) { showSite(result); return false; }
   // keep the scroll position when the same file is regenerated
   const key = mode + ':' + name;
   const scroll = viewer && viewerKey === key ? viewer.scrollSnapshot() : null;
@@ -157,39 +168,71 @@ function showResult({ mode, name, result }: Result): void {
     $('out').append(card);
   } else if (mode === 'typst' && rendered) {
     void showPdf(name, result, my);
+    return true;
   } else if (mode === 'markdown' && rendered) {
     markdownFrame(result).then(f => { if (my === seq) showOnPaper(f); }, err => { if (my === seq) showError(String(err)); });
   } else if (rendered) {
-    showPage(mode, name, result, key, pageY, my);
+    return showPage(mode, name, result, key, pageY, my);
   } else {
     showSource(result, mode, key, scroll);
   }
+  return false;
 }
 
 // ── web and print pages: on their own, or with the assets their template links ──
 let pageFrame: HTMLIFrameElement | null = null, pageKey = '';
 const frameScroll = (f: HTMLIFrameElement) => { try { return f.contentWindow?.scrollY ?? 0; } catch { return 0; } };
+/** Called with the print frame's message once Paged.js has laid out its pages (or failed to load). */
+let pagedDone: ((frame: Window, m: PagedMessage) => void) | null = null;
+/** Paged.js normally reports back; if it never does, show the frame as it is after this long. */
+const PAGED_TIMEOUT = 60_000;
 
 /**
  * Show a rendered page. When its template links assets ([transform.web] assets),
  * they are copied beside it as `opm transform -o` does, and the page is served
  * with them through the service worker; otherwise it needs nothing beside it.
+ * Print mode injects Paged.js so CSS Paged Media becomes on-screen page boxes;
+ * the frame stays hidden behind a loading box until the pages are laid out.
+ * Returns true when it will set the status itself.
  */
-function showPage(mode: Mode, name: string, html: string, key: string, y: number, my: number): void {
+function showPage(mode: Mode, name: string, html: string, key: string, y: number, my: number): boolean {
+  const paged = mode === 'print';
+  const preview = paged ? withPagedJs(html) : html;
   const page = name.replace(/\.[^.]+$/, '') + '.html', out = '/tmp/opm-page/' + state.project;
   let s;
-  try { s = pageSite(state.dir, mode, page, html, out); }
-  catch (err) { showError(String(err).split('\n').filter(Boolean).slice(-2).join('\n')); return; }
+  try { s = pageSite(state.dir, mode, page, preview, out); }
+  catch (err) { showError(String(err).split('\n').filter(Boolean).slice(-2).join('\n')); return false; }
   const show = (frame: HTMLIFrameElement) => {
-    // regenerated: back to where the reader was
-    if (y) frame.addEventListener('load', () => frame.contentWindow?.scrollTo(0, y), { once: true });
+    // regenerated: back to where the reader was (paged layout changes heights, so skip print)
+    if (y && !paged) frame.addEventListener('load', () => frame.contentWindow?.scrollTo(0, y), { once: true });
     pageFrame = frame; pageKey = key;
-    showOnPaper(frame);
+    const paper = showOnPaper(frame, paged ? 'paged' : 'page');
+    if (paged) waitForPages(frame, paper, my);
   };
-  if (!s) { show(el('iframe', { srcdoc: html })); return; }
+  if (paged) setStatus('Laying out pages…', 'busy');
+  if (!s) { show(el('iframe', { srcdoc: preview })); return paged; }
   const { files } = s, read = (p: string) => py.FS.readFile(out + '/' + p) as Uint8Array;
   publishSite(files, read).then(base => { if (my === seq) show(el('iframe', { src: base + page })); },
     err => { if (my === seq) showError(String(err)); });
+  return paged;
+}
+
+/** Keep the print frame hidden behind a loading box until Paged.js reports its pages. */
+function waitForPages(frame: HTMLIFrameElement, paper: HTMLElement, my: number): void {
+  paper.classList.add('loading');
+  const over = el('div', { className: 'loading-over' });
+  over.append(loadingBox('Laying out pages…', 'Paged.js splits the print output into pages. Long documents take a few seconds.'));
+  $('out').append(over);
+  const finish = (m: PagedMessage | null) => {
+    clearTimeout(timer); pagedDone = null;
+    over.remove(); paper.classList.remove('loading');
+    if (my !== seq) return;
+    if (m?.opmPaged === 'done') setStatus('Up to date · ' + (m.pages ?? '?') + ' pages');
+    else if (m?.opmPaged === 'error') setStatus('Paged.js could not be loaded: showing the print output unpaged', 'err');
+    else setStatus('Page layout did not report back: showing the print output as it is');
+  };
+  const timer = setTimeout(() => { if (my === seq) finish(null); }, PAGED_TIMEOUT);
+  pagedDone = (source, m) => { if (source === frame.contentWindow) finish(m); };
 }
 
 let site: { frame: HTMLIFrameElement; base: string } | null = null;
@@ -225,10 +268,15 @@ function showSource(text: string, mode: Mode, key: string, scroll: ReturnType<Ed
 }
 
 async function showPdf(name: string, source: string, my: number): Promise<void> {
-  setStatus('Compiling PDF… (first time downloads the Typst compiler)', 'busy');
+  const first = !typstLoaded();
+  setStatus(first ? 'Loading the Typst compiler…' : 'Compiling PDF…', 'busy');
+  const box = loadingBox(first ? 'Loading the Typst compiler…' : 'Compiling PDF…',
+    first ? 'The first time, the PDF compiler (about 9 MB) is downloaded; after that it comes from the browser\'s cache.' : '');
+  $('out').append(box);
   try {
     const pdf = await compilePdf(source);
     if (my !== seq) return;
+    box.remove();
     const url = URL.createObjectURL(new Blob([pdf as BlobPart], { type: 'application/pdf' }));
     $('out').append(el('iframe', { src: url }));
     const file = name.replace(/\.[^.]+$/, '') + '.pdf';
@@ -310,8 +358,13 @@ export function initOutput(): void {
   for (const b of view.children as HTMLCollectionOf<HTMLElement>) b.onclick = () => {
     state.view = b.dataset.v as typeof state.view; view.dataset.touched = '1';
     for (const x of view.children) x.setAttribute('aria-pressed', String(x === b));
-    if (last) showResult(last);
+    // leaving a preview that was still loading must not leave its busy status behind
+    if (last && !showResult(last)) setStatus('Up to date');
   };
+  window.addEventListener('message', e => {
+    const m = e.data as PagedMessage | null;
+    if (pagedDone && e.source && m && typeof m === 'object' && 'opmPaged' in m) pagedDone(e.source as Window, m);
+  });
   $('tpl').onchange = () => {
     const v = $<HTMLSelectElement>('tpl').value, sec = 'transform.' + state.mode, toml = readText('opm.toml');
     writeFile('opm.toml', v ? setToml(toml, sec, 'template', v) : unsetToml(toml, sec, 'template'));

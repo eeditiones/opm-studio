@@ -2,6 +2,7 @@ export const PYODIDE = 'https://cdn.jsdelivr.net/pyodide/v314.0.7/full/';
 export const WHEEL = 'open_processing_model-0.9.0-py3-none-any.whl';
 export const MARKED = 'https://cdn.jsdelivr.net/npm/marked@15/lib/marked.esm.js';
 export const MARKED_FOOTNOTE = 'https://cdn.jsdelivr.net/npm/marked-footnote@1/dist/index.js';
+export const PAGEDJS = 'https://cdn.jsdelivr.net/npm/pagedjs@0.4.3/dist/paged.polyfill.min.js';
 export const TYPST = 'https://cdn.jsdelivr.net/npm/@myriaddreamin/';
 
 export const MODES = ['web', 'print', 'epub', 'markdown', 'docx', 'typst', 'json', 'chunk'] as const;

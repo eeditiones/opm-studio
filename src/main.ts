@@ -10,6 +10,7 @@ import { initLayout } from './ui/layout.ts';
 import { initOutput } from './ui/output.ts';
 import { initPrefs } from './ui/prefs.ts';
 import { loadMarked } from './ui/previews/markdown.ts';
+import { prefetchPaged } from './ui/previews/print.ts';
 import { hideSplash, splash, splashFailed } from './ui/splash.ts';
 import { initStart, openSaved, renderCards, showStart } from './ui/start.ts';
 import { setStatus } from './ui/status.ts';
@@ -38,6 +39,7 @@ initSyncUi();
 try {
   await loadRuntime(splash);
   void loadMarked().catch(() => {}); // a failure shows up when Markdown is previewed
+  prefetchPaged(); // warm Paged.js for the print preview
   renderCards();
   setStatus('Ready');
   const last = lastProject();

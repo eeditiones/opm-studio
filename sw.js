@@ -1,5 +1,5 @@
 // App files are cached up front; the large CDN downloads (Pyodide, Python
-// packages, marked, the Typst compiler) are cached the first time they are used.
+// packages, marked, Paged.js, the Typst compiler) are cached the first time they are used.
 const VERSION = 'v17';
 const APP = `opm-app-${VERSION}`, CDN = 'opm-cdn';
 // chunked output, put there by the page (src/ui/previews/site.ts) and served as if from a server

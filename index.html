@@ -82,7 +82,7 @@
       <!-- one button per mode in MODES (src/config.ts); data-tip describes what it produces -->
       <div class="seg" id="modes">
         <button data-mode="web" data-tip-title="HTML page" data-tip="One HTML page for the browser, built from the web template and styled with the ODD's CSS.">web</button>
-        <button data-mode="print" data-tip-title="HTML for print" data-tip="HTML laid out for paged-media CSS: page size, running heads and page breaks, ready for printing to PDF.">print</button>
+        <button data-mode="print" data-tip-title="HTML for print" data-tip="HTML laid out for paged-media CSS: page size, running heads and page breaks. The rendered preview uses Paged.js to show pages on screen.">print</button>
         <button data-mode="epub" data-tip-title="EPUB e-book" data-tip="An EPUB 3 e-book for readers such as Apple Books or Calibre. Download only.">epub</button>
         <button data-mode="markdown" data-tip-title="Markdown" data-tip="Plain Markdown text, previewed as rendered HTML.">markdown</button>
         <button data-mode="docx" data-tip-title="Word document" data-tip="A .docx file for Word or LibreOffice, based on the project's Word template if it has one. Download only.">docx</button>
@@ -104,6 +104,7 @@
         <button class="btn small" id="docs-close" data-tip="Back to the transform output">Close</button></span>
       <label id="tpl-field" for="tpl">Template <select id="tpl"></select></label>
       <span class="spacer"></span>
+      <button class="btn dl" id="print" hidden></button>
       <button class="btn dl" id="download" hidden></button>
       <button class="ibtn" id="enlarge" aria-label="Enlarge output to the whole window" aria-pressed="false"></button>
     </div>
@@ -114,7 +115,7 @@
   <section id="start">
     <div class="start-inner">
       <h2>Start a project</h2>
-      <p class="hint">A project is a folder created by <code>opm init</code>: an ODD with its CSS, XML sources, templates and assets. Select an example or start from scratch by selecting one of the templates below.</p>
+      <p class="hint">A project combines an ODD with its CSS, XML sources, templates and assets. Select an example or start from scratch by selecting one of the templates below.</p>
       <div class="prow"><input type="text" id="new-name" placeholder="Project name (optional)"><label class="chk" data-tip="Copy all available templates, not just the ones associated with the project"><input type="checkbox" id="all-tpl"> copy all templates</label><label class="chk" data-tip="Also copy the OPM base templates and stylesheets"><input type="checkbox" id="base-tpl"> copy base templates</label></div>
       <h3>Examples</h3>
       <div class="cards" id="ex-cards"></div>

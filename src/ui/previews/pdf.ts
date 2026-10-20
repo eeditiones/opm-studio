@@ -10,6 +10,7 @@ interface TypstSnippet {
 declare const $typst: TypstSnippet;
 
 let typstReady: Promise<TypstSnippet> | null = null;
+let compiled = false;
 
 function loadTypst(): Promise<TypstSnippet> {
   typstReady ??= import(TYPST + 'typst.ts@0.7.0/dist/esm/contrib/all-in-one-lite.bundle.js').then(() => {
@@ -19,6 +20,11 @@ function loadTypst(): Promise<TypstSnippet> {
   return typstReady;
 }
 
+/** Whether a PDF has been compiled in this session, i.e. the compiler is no longer downloaded first. */
+export const typstLoaded = () => compiled;
+
 export async function compilePdf(source: string): Promise<Uint8Array> {
-  return (await loadTypst()).pdf({ mainContent: source });
+  const pdf = await (await loadTypst()).pdf({ mainContent: source });
+  compiled = true;
+  return pdf;
 }
