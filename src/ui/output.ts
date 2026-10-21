@@ -145,10 +145,11 @@ function showOnPaper(frame: HTMLIFrameElement, kind: 'page' | 'paged' = 'page'):
   return paper;
 }
 
-/** A centred box with an indeterminate progress bar, for previews that take a while. */
+/** A centred note for previews that take a while. No animated bar: Paged.js
+ *  already occupies the main thread, and an indeterminate <progress> fights it. */
 function loadingBox(title: string, hint = ''): HTMLElement {
   const box = el('div', { className: 'docs-progress' });
-  box.append(el('strong', { textContent: title }), el('progress'));
+  box.append(el('strong', { textContent: title }));
   if (hint) box.append(el('p', { className: 'hint', textContent: hint }));
   return box;
 }
