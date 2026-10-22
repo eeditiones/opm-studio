@@ -45,3 +45,24 @@
 .VPNavBar .title { font-weight: 600; }
 .VPHero .name { font-weight: 600; letter-spacing: -0.02em; }
 .vp-doc table { font-size: 14px; }
+
+/* home hero: an app screenshot instead of the logo, framed like a window */
+.VPHero.has-image .image { margin: 40px 0 0; order: 3; }
+.VPHero.has-image .image-container { width: 100%; height: auto; transform: none; }
+.VPHero.has-image .image-bg { display: none; }
+.VPHero.has-image .image-src {
+  position: static; transform: none; display: block;
+  max-width: 100%; max-height: none;
+  border: 1px solid var(--vp-c-divider); border-radius: 10px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 6%), 0 12px 40px -8px rgb(0 0 0 / 18%);
+}
+@media (min-width: 960px) {
+  .VPHero.has-image .main { max-width: 440px !important; }
+  .VPHero.has-image .image { margin: 0 0 0 56px; flex: 1 1 0; min-width: 0; align-self: center; }
+}
+.VPHero.has-image .image-container > a { display: block; }
+.VPHero.has-image .image-container > a .image-src { transition: transform .2s, box-shadow .2s; }
+.VPHero.has-image .image-container > a:hover .image-src {
+  transform: translateY(-2px);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 6%), 0 18px 48px -8px rgb(0 0 0 / 24%);
+}

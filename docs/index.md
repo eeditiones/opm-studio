@@ -6,8 +6,9 @@ hero:
   text: Transform XML in your browser
   tagline: Define transformation rules in a declarative specification. No installation, no server.
   image:
-    src: /icon.svg
-    alt: OPM Studio
+    src: /screenshots/workspace.png
+    alt: OPM Studio editor with XML source and PDF preview
+    link: https://wolfgangmm.github.io/opm-studio/
   actions:
     - theme: brand
       text: Open the app
@@ -28,10 +29,10 @@ features:
     details: Edit element specs and models in a visual editor or as XML source, and generate documentation for your specs.
 ---
 
-## About
+## What is _OPM Studio_?
 
-This application is based on the [Open Processing Model](https://opm.e-editiones.org), a Python implementation of the TEI Processing Model, which is part of the TEI guidelines, but works for any XML. _OPM Studio_ runs it entirely inside the web browser, so you don't have to install anything at all.
+Describe *what* your XML should become — OPM Studio takes care of the *how*. Write a few declarative rules and turn TEI, JATS, DocBook or other XML into anything from a single HTML page to a complete static website. Everything runs right in your browser: just open it and start transforming.
 
-It provides a convenient way to run or develop a transformation, either for a standalone publication or to be integrated into a more complex site.
+## What is _OPM_?
 
-<a href="https://wolfgangmm.github.io/opm-studio/" target="_self" title="Open the app"><img src="/screenshots/workspace.png" alt="Editor screenshot" style="width: 66.67%; margin: 0 auto"></a>
+The [Open Processing Model](https://opm.e-editiones.org) is the library on which studio is based. It's a Python implementation of the TEI Processing Model, which is part of the TEI standard. Born in the TEI world, it works just as well with any XML vocabulary. In comparison with, say, XSLT stylesheets, it tends to be concise, easy to read, and self-documented. All you need to know is basic XPath plus a few key elements and attributes.
