@@ -67,6 +67,7 @@ select, .btn, input[type=text] { font: inherit; padding: 0 .6rem; height: 30px; 
 .outbar { container-type: inline-size; }
 @container (max-width: 480px) { #download, #print { font-size: 0; gap: 0; padding: 0 9px; } }
 #print { display: flex; align-items: center; gap: 6px; height: 28px; flex: none; }
+#print[hidden] { display: none; }
 #print:disabled { opacity: .5; cursor: wait; }
 .ibtn { width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 5px; background: transparent; color: var(--muted); cursor: pointer; padding: 0; flex: none; }
 .ibtn:hover { background: var(--hover); color: var(--fg); }

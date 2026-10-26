@@ -19,7 +19,12 @@ const post = (m: DocMessage, transfer: Transferable[] = []) => (self as unknown 
 
 self.onmessage = async ({ data }: MessageEvent<DocRequest>) => {
   try {
-    runtime ??= createRuntime((label, pct) => post({ type: 'progress', label, done: pct, total: 100 }));
+    // steps only: the bytes come from the service worker's cache, so a filling bar would read as a second download
+    let step = '';
+    runtime ??= createRuntime(label => {
+      if (label !== step) post({ type: 'progress', label: label === 'Loading Python…' ? 'Starting Python in the background…' : label, done: 0, total: 0 });
+      step = label;
+    });
     const py = await runtime;
     if (data.tei) py.globals.get('install_tei')(data.tei);
     py.globals.get('reset_dir')(ROOT);

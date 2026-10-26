@@ -83,7 +83,8 @@ async function runDocs(): Promise<void> {
   viewer?.destroy(); viewer = null;
   clearOut(); hideDownload();
   const my = seq;
-  const label = el('div', { textContent: 'Starting…' }), bar = el('progress');
+  // no indeterminate bar: an animated <progress> makes the page lag; show it only once there is a count
+  const label = el('div', { textContent: 'Starting…' }), bar = el('progress', { hidden: true });
   const box = el('div', { className: 'docs-progress' });
   box.append(el('strong', { textContent: 'Documenting ' + odd }), label, bar,
     el('p', { className: 'hint', textContent: 'A TEI customization is merged onto the whole TEI schema, which can take a minute. You can keep editing meanwhile.' }));
@@ -93,7 +94,8 @@ async function runDocs(): Promise<void> {
   try {
     const docs = await documentOdd(snapshot(), odd, (text, done, total) => {
       label.textContent = text + (total > 0 && total !== 100 ? ` · ${done} of ${total}` : '');
-      if (total > 0) { bar.max = total; bar.value = done; } else bar.removeAttribute('value');
+      bar.hidden = total <= 0;
+      if (total > 0) { bar.max = total; bar.value = done; }
     });
     const files = Object.keys(docs.files), read = (p: string) => docs.files[p];
     const s: Site = { files, landing: docs.landing, read, zip: base(odd).replace(/\.[^.]+$/, '') + '-docs.zip', base: await publishSite(files, read) };
