@@ -18,13 +18,17 @@ let oddEditor: OddEditor;
 /** The ODD the visual editor last showed, so reopening it keeps the selection. */
 let oddShown = '';
 
-function editorKind(p: string): EditorKind {
+/** TEI by namespace or root element; other XML (XSLT, RELAX NG, SVG…) gets no TEI completion. */
+const isTei = (text: string) => text.includes('http://www.tei-c.org/ns/1.0') || /<(TEI|teiCorpus)[\s>]/.test(text);
+
+function editorKind(p: string, text: string): EditorKind {
   const e = extOf(p), n = base(p);
   if (e === 'toml') return 'toml';
   if (e === 'css') return 'css';
   if (e === 'py') return 'python';
   if (/\.html\.j2$|\.html?$/.test(n)) return 'html';
   if (e === 'j2') return 'jinja';
+  if (['xml', 'odd', 'tei'].includes(e) && isTei(text)) return 'tei';
   if (['xml', 'odd', 'tei', 'xsd', 'rng', 'xsl', 'xslt', 'svg', 'xhtml'].includes(e)) return 'xml';
   return '';
 }
@@ -35,7 +39,7 @@ function render(): void {
   const p = state.file, text = !!p && isText(p), visual = visualOdd(p);
   $('src').hidden = !text || visual; $('oddvis').hidden = !visual; $('preview').hidden = text || visual;
   if (visual) showOdd(p);
-  else if (text) editor.setValue(readText(p), editorKind(p));
+  else if (text) { const t = readText(p); editor.setValue(t, editorKind(p, t)); }
   else if (p) showBinary(p);
   else showNothing();
   renderTabs(); renderKind();
@@ -45,7 +49,7 @@ function render(): void {
 function reload(): void {
   const p = state.file;
   if (visualOdd(p)) oddEditor.reload();
-  else if (p && isText(p) && readText(p) !== editor.getValue()) editor.setValue(readText(p), editorKind(p));
+  else if (p && isText(p) && readText(p) !== editor.getValue()) { const t = readText(p); editor.setValue(t, editorKind(p, t)); }
   renderTabs(); renderKind();
 }
 

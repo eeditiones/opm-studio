@@ -11,6 +11,7 @@ import { StreamLanguage } from '@codemirror/language';
 import { toml } from '@codemirror/legacy-modes/mode/toml';
 import { python } from '@codemirror/legacy-modes/mode/python';
 import { json } from '@codemirror/legacy-modes/mode/javascript';
+import { loadTeiSchema } from './teiSchema.ts';
 
 export const highlightStyle = HighlightStyle.define([
   { tag: [t.tagName, t.angleBracket, t.typeName, t.className, t.keyword], color: 'var(--tag)' },
@@ -45,8 +46,9 @@ const jinja = ViewPlugin.fromClass(class {
   update(u: ViewUpdate) { this.decorations = jinjaDeco.updateDeco(u, this.decorations); }
 }, { decorations: p => p.decorations });
 
-export type EditorKind = 'xml' | 'odd' | 'css' | 'html' | 'jinja' | 'toml' | 'python' | '';
-const LANGS: Record<Exclude<EditorKind, ''>, () => Extension[]> = { xml: () => [xml()], odd: () => [xml()], css: () => [css()], html: () => [html(), jinja], jinja: () => [jinja], toml: () => [StreamLanguage.define(toml)], python: () => [StreamLanguage.define(python)] };
+export type EditorKind = 'xml' | 'tei' | 'odd' | 'css' | 'html' | 'jinja' | 'toml' | 'python' | '';
+// 'tei' starts as plain XML; the editor adds schema completion once schema/tei.json has arrived
+const LANGS: Record<Exclude<EditorKind, ''>, () => Extension[]> = { xml: () => [xml()], tei: () => [xml()], odd: () => [xml()], css: () => [css()], html: () => [html(), jinja], jinja: () => [jinja], toml: () => [StreamLanguage.define(toml)], python: () => [StreamLanguage.define(python)] };
 
 export interface Editor {
   getValue(): string;
@@ -62,7 +64,7 @@ export const remeasureEditors = (): void => editors.forEach(v => v.requestMeasur
 
 export function createEditor(parent: HTMLElement, onChange: () => void): Editor {
   const lang = new Compartment();
-  let silent = false;
+  let silent = false, shown = 0;
   const view = new EditorView({
     parent,
     state: EditorState.create({
@@ -81,6 +83,11 @@ export function createEditor(parent: HTMLElement, onChange: () => void): Editor 
       view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text }, effects: lang.reconfigure(kind ? LANGS[kind]() : []),
         selection: { anchor: 0 }, scrollIntoView: true });
       silent = false;
+      const my = ++shown;
+      // only if the same document is still open when the schema arrives
+      if (kind === 'tei') void loadTeiSchema().then(elements => {
+        if (my === shown && elements.length) view.dispatch({ effects: lang.reconfigure(xml({ elements })) });
+      });
     },
     replace(text) {
       const old = view.state.doc.toString();

@@ -68,6 +68,7 @@ jobs:
           mkdir -p _site/dist
           cp index.html style.css sw.js manifest.webmanifest icon.svg icon*.png _site/
           cp dist/app.js dist/app.js.map dist/docworker.js dist/docworker.js.map dist/*.whl dist/p5all.xml.gz _site/dist/
+          cp -r schema _site/schema
           cp -r docs/.vitepress/dist _site/docs
           touch _site/.nojekyll
 

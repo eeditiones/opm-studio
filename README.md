@@ -38,6 +38,8 @@ The documentation site in `docs/` is built with VitePress and deployed with the 
 
 The `chunk` output mode runs `opm chunk` and writes the pages to `/tmp/opm-chunks/` in Pyodide, outside the project. `src/ui/previews/site.ts` copies them into Cache Storage under `preview/<run>/`, and `sw.js` serves that path to the preview frame as a static server would. The rendered web and print previews take the same route when their template links assets (`[transform.web] assets`): the page and its `assets/` folder are published together, as `opm transform -o` writes them.
 
+XML sources in the TEI namespace get element and attribute completion from `schema/tei.json`, the full TEI schema as [jinn-codemirror](https://github.com/JinnElements/jinn-codemirror) ships it (MIT). `src/ui/teiSchema.ts` fetches it the first time a TEI file is opened.
+
 The ODD editor's Document button runs `opm odd document` on the open ODD. Because a TEI customization takes close to a minute, it runs in a Web Worker with its own Pyodide (`src/runtime/docworker.ts`, bundled as `dist/docworker.js`), and the site is shown through the same `preview/` route. opm merges TEI customizations onto `p5all.xml.gz`, which it would download from a GitHub release. The browser cannot fetch that cross-origin, so the Pages build puts it in `dist/` beside the wheel. For local development, download it once:
 
     curl -sSfL -o dist/p5all.xml.gz https://github.com/eeditiones/open-processing-model/releases/download/tei-data/p5all.xml.gz
