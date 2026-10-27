@@ -1,6 +1,7 @@
 // ── typed calls into glue.py ───────────────────────────────────────────────
 import type { Mode } from '../config.ts';
 import { py } from './pyodide.ts';
+import type { RawSchema } from '../ui/completionSchema.ts';
 
 export interface Example { name: string; title: string; summary: string }
 /** A vocabulary and its display label, e.g. ['tei', 'TEI']. */
@@ -23,6 +24,9 @@ export function convert(root: string, xml: string, mode: Mode): string | Uint8Ar
   const result = fn<[string, string, Mode], string | { toJs(): Uint8Array }>('convert')(root, xml, mode);
   return typeof result === 'string' ? result : result.toJs();
 }
+
+/** What the RELAX NG schema root/path allows, for autocompletion (see completion_schema.py). */
+export const completionFromRng = (root: string, path: string): RawSchema => JSON.parse(fn<[string, string], string>('completion_from_rng')(root, path));
 
 export interface ChunkRun { files: string[]; landing: string }
 /** Chunk root/xml into HTML pages below the absolute folder out. */

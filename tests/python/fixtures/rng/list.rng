@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A lone pattern, pulled in by externalRef. -->
+<element name="list" xmlns="http://relaxng.org/ns/structure/1.0">
+  <oneOrMore><element name="item"><text/></element></oneOrMore>
+</element>

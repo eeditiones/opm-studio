@@ -2,6 +2,7 @@
 import type { PyodideAPI } from 'pyodide';
 import { PYODIDE, WHEEL } from '../config.ts';
 import { withDownloadProgress, type DownloadProgress } from './download.ts';
+import completionSchema from './completion_schema.py';
 import glue from './glue.py';
 
 /** Step label, rough percent, and optional byte counts while CDN files arrive. */
@@ -15,7 +16,7 @@ export async function loadRuntime(progress: RuntimeProgress): Promise<PyodideAPI
   return py;
 }
 
-/** A fresh Pyodide with opm and glue.py; the page has one, the documentation worker another. */
+/** A fresh Pyodide with opm, glue.py and the modules it imports; the page has one, the documentation worker another. */
 export async function createRuntime(progress: RuntimeProgress = () => {}): Promise<PyodideAPI> {
   let step = 'Loading Python…';
   let stepPct = 5;
@@ -51,6 +52,10 @@ import micropip
 await micropip.install(['elementpath>=4.8', 'python-docx>=1.1'])
 await micropip.install('emfs:/tmp/${WHEEL}', deps=False)
 `);
+    // studio's own Python modules, importable from glue.py
+    runtime.FS.mkdirTree('/studio');
+    runtime.FS.writeFile('/studio/completion_schema.py', completionSchema);
+    await runtime.runPythonAsync(`import sys; sys.path.insert(0, '/studio')`);
     await runtime.runPythonAsync(glue);
     stepPct = 90;
     report();

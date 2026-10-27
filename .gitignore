@@ -4,3 +4,5 @@ dist/
 .claude/settings.local.json
 docs/.vitepress/cache/
 docs/.vitepress/dist/
+__pycache__/
+.pytest_cache/

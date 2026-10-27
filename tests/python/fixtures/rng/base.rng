@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Included by main.rng, which overrides "inline". -->
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+  <define name="inline">
+    <choice>
+      <element name="b"><text/></element>
+      <element name="i"><text/></element>
+    </choice>
+  </define>
+  <define name="block">
+    <element name="para">
+      <zeroOrMore><choice><text/><ref name="inline"/></choice></zeroOrMore>
+    </element>
+  </define>
+  <!-- defined, but nothing refers to it -->
+  <define name="orphan">
+    <element name="orphan"><empty/></element>
+  </define>
+</grammar>

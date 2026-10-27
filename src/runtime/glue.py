@@ -46,6 +46,12 @@ def convert(root, xml, mode):
     return Project.load(root / 'opm.toml').transform(root / xml, mode=mode)
 
 
+def completion_from_rng(root, path):
+    """Elements, children and attributes the RELAX NG schema root/path allows, as JSON for the editor."""
+    from completion_schema import from_rng
+    return json.dumps(from_rng(Path(root) / path))
+
+
 def chunk(root, xml, out):
     """Chunk root/xml into HTML pages below out; returns the files written and the page to open first."""
     root = Path(root)

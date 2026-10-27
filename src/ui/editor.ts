@@ -6,6 +6,7 @@ import { roleOf } from '../project/pipeline.ts';
 import { isText } from '../project/zip.ts';
 import { emit, on, state } from '../state.ts';
 import { createEditor, type EditorKind } from './codemirror.ts';
+import { schemaFor } from './xmlSchema.ts';
 import { $, el } from './dom.ts';
 import { icon } from './icons.ts';
 import { formatOdd } from '../odd/oddFormat.ts';
@@ -18,28 +19,31 @@ let oddEditor: OddEditor;
 /** The ODD the visual editor last showed, so reopening it keeps the selection. */
 let oddShown = '';
 
-/** TEI by namespace or root element; other XML (XSLT, RELAX NG, SVG…) gets no TEI completion. */
-const isTei = (text: string) => text.includes('http://www.tei-c.org/ns/1.0') || /<(TEI|teiCorpus)[\s>]/.test(text);
-
-function editorKind(p: string, text: string): EditorKind {
+function editorKind(p: string): EditorKind {
   const e = extOf(p), n = base(p);
   if (e === 'toml') return 'toml';
   if (e === 'css') return 'css';
   if (e === 'py') return 'python';
   if (/\.html\.j2$|\.html?$/.test(n)) return 'html';
   if (e === 'j2') return 'jinja';
-  if (['xml', 'odd', 'tei'].includes(e) && isTei(text)) return 'tei';
   if (['xml', 'odd', 'tei', 'xsd', 'rng', 'xsl', 'xslt', 'svg', 'xhtml'].includes(e)) return 'xml';
   return '';
 }
 
 const visualOdd = (p: string) => !!p && state.oddView === 'visual' && isOdd(p);
 
+/** Show p's text, with autocompletion from its schema when it is XML. */
+function show(p: string): void {
+  const text = readText(p), kind = editorKind(p);
+  editor.setValue(text, kind);
+  if (kind === 'xml') editor.useSchema(schemaFor(p, text));
+}
+
 function render(): void {
   const p = state.file, text = !!p && isText(p), visual = visualOdd(p);
   $('src').hidden = !text || visual; $('oddvis').hidden = !visual; $('preview').hidden = text || visual;
   if (visual) showOdd(p);
-  else if (text) { const t = readText(p); editor.setValue(t, editorKind(p, t)); }
+  else if (text) show(p);
   else if (p) showBinary(p);
   else showNothing();
   renderTabs(); renderKind();
@@ -49,7 +53,7 @@ function render(): void {
 function reload(): void {
   const p = state.file;
   if (visualOdd(p)) oddEditor.reload();
-  else if (p && isText(p) && readText(p) !== editor.getValue()) { const t = readText(p); editor.setValue(t, editorKind(p, t)); }
+  else if (p && isText(p) && readText(p) !== editor.getValue()) show(p);
   renderTabs(); renderKind();
 }
 

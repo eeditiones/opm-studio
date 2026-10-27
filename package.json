@@ -6,7 +6,9 @@
     "build": "esbuild app=src/main.ts docworker=src/runtime/docworker.ts --bundle --format=esm --target=es2022 --loader:.py=text --outdir=dist --minify --sourcemap",
     "dev": "esbuild app=src/main.ts docworker=src/runtime/docworker.ts --bundle --format=esm --target=es2022 --loader:.py=text --outdir=dist --sourcemap --watch --servedir=.",
     "check": "tsc --noEmit && tsc --noEmit -p tests",
-    "test": "node --test 'tests/unit/*.test.ts' && node tests/node/modes.mjs"
+    "test": "node --test 'tests/unit/*.test.ts' && node tests/node/modes.mjs",
+    "test:py": "uv run --no-project --with lxml --with pytest pytest -q tests/python",
+    "schemas": "uv run --no-project --with lxml scripts/schemas.py"
   },
   "keywords": [],
   "author": "",

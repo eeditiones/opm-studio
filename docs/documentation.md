@@ -91,9 +91,9 @@ For a first hands-on, continue with the [tutorial](/tutorials/first-project). To
 
 To add files to a project, click the upload button above the file list, click the drop area below it, or simply drag files from your computer anywhere onto the window.
 
-OPM Studio sorts what you upload into the folder where opm expects it: XML documents go to `data`, ODDs and the CSS files they refer to go to `odd`, and everything else, such as templates, stylesheets and images, goes to `templates`. If you want a file to end up somewhere else, drop it onto a folder in the file list instead; dropped onto a file, it lands next to that file.
+OPM Studio sorts what you upload into the folder where opm expects it: XML documents go to `data`, ODDs and the CSS files they refer to go to `odd`, RELAX NG schemas (`.rng`) go to `schema`, and everything else, such as templates, stylesheets and images, goes to `templates`. If you want a file to end up somewhere else, drop it onto a folder in the file list instead; dropped onto a file, it lands next to that file.
 
-When you upload a new ODD, OPM Studio asks whether it should become the project's ODD. When you upload an XML document, it becomes the document being transformed. A single `.zip` file is treated differently: it is imported as a new project of its own (see below).
+When you upload a new ODD, OPM Studio asks whether it should become the project's ODD. When you upload a schema, it asks whether the editor should use it for autocompletion (see [Autocompletion and schemas](#autocompletion-and-schemas)). When you upload an XML document, it becomes the document being transformed. A single `.zip` file is treated differently: it is imported as a new project of its own (see below).
 
 To create an empty file instead, use the new-file button next to the upload button.
 
@@ -108,3 +108,44 @@ Changes flow both ways: edit a file in OPM Studio and it is written to disk; edi
 While a folder is linked, the top bar shows its name and the state of the sync. If a file has changed both in the browser and on disk since the last sync, OPM Studio asks which version to keep, or whether to keep both. After the page has been reloaded, the browser may ask for permission to access the folder again: click the indicator in the top bar to grant it. **Stop syncing with …** in the project menu unlinks the folder; both the folder and the project stay as they are.
 
 Firefox and Safari do not allow web pages to write to folders, so these options are not shown there. Use **Export .zip** and **Import .zip…** instead.
+
+## Autocompletion and schemas
+
+While you edit an XML document, the editor suggests the elements allowed at the cursor, their attributes and values, each with a description (if provided). Suggestions appear as you type `<` or an attribute name; press <kbd>Ctrl</kbd>+<kbd>Space</kbd> to ask for them anywhere (on a Mac, <kbd>Option</kbd>+<kbd>I</kbd> works too).
+
+Autocompletion knows *which* elements and attributes may appear inside an element, not in which order or how many of them are required. It helps you write valid markup, but it does not check that a document is valid.
+
+For autocompletion to work, the editor needs a JSON specification. OPM Studio ships with default specifications for complete TEI p5, Docbook and JATS. For other XML languages or specific customizations, a JSON can be derived automatically from an RELAX NG schema.
+
+### Using a RELAX NG schema
+
+For each XML document, OPM Studio looks for a schema in this order:
+
+1. **An `<?xml-model?>` instruction in the document** naming a RELAX NG schema in the project. The path is relative to the document:
+
+   ```xml
+   <?xml-model href="../schema/letters.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+   ```
+
+   Locations pointing at a web address (`https://…`) are skipped: the web browser is not allowed to load schemas from external locations.
+2. **The `[editor]` section of `opm.toml`**, naming a schema for every document in the project that has no `<?xml-model?>` of its own. The path is relative to the project folder:
+
+   ```toml
+   [editor]
+   schema = "schema/letters.rng"
+   ```
+
+   Instead of an `.rng`, `schema` may reference a prepared JSON completion file (see below).
+3. TEI, DocBook and JATS documents without another configuration use a pre-generated JSON completion file, corresponding to the complete TEI P5, DocBook 5.2 and JATS 1.3 Archiving (with MathML 3) respectively.
+4. Other documents get no suggestions.
+
+### Using your own RELAX NG schema
+
+Upload the `.rng` file. OPM Studio puts it into the `schema` folder and asks whether to use it for autocompletion.
+
+A few things to keep in mind:
+
+- The schema must use the XML syntax of RELAX NG (`.rng`). The compact syntax (`.rnc`) and XML Schema (`.xsd`) are not read. Tools such as [trang](https://relaxng.org/jclark/trang.html) convert both to `.rng`.
+- A schema split over several files, joined with `include` or `externalRef`, needs all of them. Upload them together, so they land in the same folder and the relative links between them still work.
+- For a customized TEI, export the RELAX NG from your ODD, for example with [Roma](https://roma.tei-c.org/) or [TEIGarage](https://teigarage.tei-c.org/).
+- A large schema takes up to a second to read the first time a document using it is opened. The editor stays usable meanwhile and the suggestions appear once the schema is ready.

@@ -38,7 +38,7 @@ The documentation site in `docs/` is built with VitePress and deployed with the 
 
 The `chunk` output mode runs `opm chunk` and writes the pages to `/tmp/opm-chunks/` in Pyodide, outside the project. `src/ui/previews/site.ts` copies them into Cache Storage under `preview/<run>/`, and `sw.js` serves that path to the preview frame as a static server would. The rendered web and print previews take the same route when their template links assets (`[transform.web] assets`): the page and its `assets/` folder are published together, as `opm transform -o` writes them.
 
-XML sources in the TEI namespace get element and attribute completion from `schema/tei.json`, the full TEI schema as [jinn-codemirror](https://github.com/JinnElements/jinn-codemirror) ships it (MIT). `src/ui/teiSchema.ts` fetches it the first time a TEI file is opened.
+XML sources get element, attribute and value completion from a RELAX NG schema in the project: the one their `<?xml-model href="….rng"?>` names, or `[editor] schema = "path/to/schema.rng"` in `opm.toml`. `src/runtime/completion_schema.py` reads it in Pyodide, and `[editor] schema` may instead name the JSON that script writes when run on its own (`uv run --with lxml src/runtime/completion_schema.py schema.rng -o schema.json`; its tests: `npm run test:py`), which skips the parse; `src/ui/xmlSchema.ts` keeps the result until project files change. TEI, DocBook and JATS sources without one fall back to `schema/tei.json`, `docbook.json` or `jats.json`, fetched the first time one is needed: that script's output for the full RELAX NG of each, which `npm run schemas` downloads and converts again (`scripts/schemas.py` names the versions).
 
 The ODD editor's Document button runs `opm odd document` on the open ODD. Because a TEI customization takes close to a minute, it runs in a Web Worker with its own Pyodide (`src/runtime/docworker.ts`, bundled as `dist/docworker.js`), and the site is shown through the same `preview/` route. opm merges TEI customizations onto `p5all.xml.gz`, which it would download from a GitHub release. The browser cannot fetch that cross-origin, so the Pages build puts it in `dist/` beside the wheel. For local development, download it once:
 
@@ -51,5 +51,7 @@ Panes never call each other. An action changes `state` and emits what changed (`
 Copyright (C) 2026 e-editiones
 
 OPM Studio is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. See [LICENSE](LICENSE).
+
+The default completion schemas in `schema/` are derived from the TEI, DocBook and JATS schemas and stay under their terms; see [schema/README.md](schema/README.md).
 
 The opm logo is a trademark of its owners and is not covered by this licence.
