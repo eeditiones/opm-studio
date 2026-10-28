@@ -13,6 +13,7 @@ import { toml } from '@codemirror/legacy-modes/mode/toml';
 import { python } from '@codemirror/legacy-modes/mode/python';
 import { json } from '@codemirror/legacy-modes/mode/javascript';
 import { schemaCompletion } from './xmlCompletion.ts';
+import { allowedElements, xmlCommands } from './xmlCommands.ts';
 import type { Schema } from './xmlSchema.ts';
 
 export const highlightStyle = HighlightStyle.define([
@@ -84,6 +85,7 @@ export function createEditor(parent: HTMLElement, onChange: () => void, onValidi
     extensions: [
       basicSetup, keymap.of([indentWithTab]), theme, syntaxHighlighting(highlightStyle),
       lang.of(kind ? LANGS[kind]() : []), schemaExt.of([]),
+      kind === 'xml' || kind === 'odd' ? xmlCommands() : [],
       EditorView.updateListener.of(u => { if (u.docChanged) onChange(); }),
     ],
   });
@@ -116,6 +118,11 @@ export function createEditor(parent: HTMLElement, onChange: () => void, onValidi
       view.dispatch({ effects: schemaExt.reconfigure([
         linter(check, { delay: VALIDATE_DELAY }), lintGutter(),
         xmlLanguage.data.of({ autocomplete: schemaCompletion(schema) }),
+        // between tags, what may be written is exactly the elements to surround with
+        allowedElements.of(async (s, pos) => {
+          const r = await schema.complete(s.doc.toString(), pos).catch(() => null);
+          return r && !r.inTag ? r.suggestions.filter(x => x.kind === 'element').map(x => ({ name: x.label, detail: x.detail })) : null;
+        }),
       ]) });
     },
     nextProblem() {

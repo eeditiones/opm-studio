@@ -109,6 +109,18 @@ While a folder is linked, the top bar shows its name and the state of the sync. 
 
 Firefox and Safari do not allow web pages to write to folders, so these options are not shown there. Use **Export .zip** and **Import .zip…** instead.
 
+## Editing XML
+
+Three commands help with markup. They are available from the editor's context menu (right click; hold <kbd>Shift</kbd> for the browser's own menu), by keyboard, and in the ODD editor from the buttons above a template.
+
+| Command | Windows / Linux | Mac |
+|---|---|---|
+| Surround the selection with an element | <kbd>Ctrl</kbd>+<kbd>E</kbd> | <kbd>⌘</kbd>+<kbd>E</kbd> |
+| Select the element around the cursor; press again for its parent | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> | <kbd>⇧</kbd>+<kbd>⌘</kbd>+<kbd>E</kbd> |
+| Remove the tags of the element around the cursor, keeping its content | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd> | <kbd>⇧</kbd>+<kbd>⌘</kbd>+<kbd>X</kbd> |
+
+**Surround with element** asks for the element's name below the text. When the document has a schema, it lists the elements the schema allows at that point, with a short description of each: type to narrow the list, choose with the arrow keys and press <kbd>Enter</kbd>. Only elements from the list are accepted. To add attributes, press <kbd>Tab</kbd> to complete the name and type them after it, e.g. `persName ref="#gorbachev"`. Without a schema, any name may be typed.
+
 ## Autocompletion and validation
 
 While you edit an XML document, the editor checks it against its schema and suggests what may come next.

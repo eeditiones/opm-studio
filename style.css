@@ -334,6 +334,9 @@ main { flex: 1; min-height: 0; position: relative; display: grid; grid-template-
 .menu button .nm { flex: 1; font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .menu button .ck { width: 12px; color: var(--accent); }
 .menu button[aria-checked=true] .nm { color: var(--accent); font-weight: 500; }
+.menu button .key { color: var(--muted); font: 11.5px var(--sans); }
+.context-menu { min-width: 240px; }
+.context-menu button .nm { font-family: var(--sans); }
 .menu hr { border: 0; border-top: 1px solid var(--line-2); margin: 4px 2px; }
 
 /* ODD visual editor (src/ui/odd), after ODDity's form; layout per design 4b */

@@ -1,6 +1,6 @@
 import { LitElement, html } from "lit";
-import { EditorView, drawSelection, keymap, showPanel, type Panel } from "@codemirror/view";
-import { EditorState, EditorSelection, StateEffect, StateField } from "@codemirror/state";
+import { EditorView, drawSelection, keymap } from "@codemirror/view";
+import { EditorState } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { xml } from "@codemirror/lang-xml";
 import { css } from "@codemirror/lang-css";
@@ -9,9 +9,9 @@ import {
   syntaxHighlighting,
   bracketMatching,
   StreamLanguage,
-  syntaxTree,
 } from "@codemirror/language";
 import { highlightStyle } from "../codemirror.ts";
+import { XML_COMMANDS, xmlCommands } from "../xmlCommands.ts";
 
 /** Form fields look like the app's inputs and share the editor's syntax colours. */
 const fieldTheme = EditorView.theme({
@@ -31,81 +31,7 @@ const fieldTheme = EditorView.theme({
     backgroundColor: "color-mix(in srgb, var(--accent) 40%, transparent) !important",
   },
   ".cm-gutters": { backgroundColor: "transparent", color: "var(--faint)", border: "none" },
-  ".cm-input-panel": { padding: "4px 6px", borderTop: "1px solid var(--line-2)" },
-  ".cm-input-panel input": {
-    width: "100%",
-    boxSizing: "border-box",
-    height: "26px",
-    padding: "0 6px",
-    color: "var(--fg)",
-    backgroundColor: "var(--panel)",
-    border: "1px solid var(--btn-line)",
-    borderRadius: "4px",
-    fontFamily: "var(--sans)",
-  },
 });
-
-/**
- * The element-name prompt for the "enclose with" command is implemented as a
- * CodeMirror panel rather than `window.prompt`.
- * Toggling the state field shows/hides the input at the bottom of the editor.
- */
-const toggleEncloseWith = StateEffect.define<boolean>();
-
-const encloseWithState = StateField.define<boolean>({
-  create: () => false,
-  update(value, tr) {
-    for (const e of tr.effects) {
-      if (e.is(toggleEncloseWith)) {
-        value = e.value;
-      }
-    }
-    return value;
-  },
-  provide: (f) =>
-    showPanel.from(f, (on) => (on ? createEncloseWithPanel : null)),
-});
-
-/** Wrap each selection range with `start`/`end`, keeping the text selected. */
-function wrapSelection(view: EditorView, start: string, end: string) {
-  view.dispatch(
-    view.state.changeByRange((range) => ({
-      changes: [
-        { from: range.from, insert: start },
-        { from: range.to, insert: end },
-      ],
-      range: EditorSelection.range(
-        range.from + start.length,
-        range.to + start.length
-      ),
-    }))
-  );
-}
-
-function createEncloseWithPanel(view: EditorView): Panel {
-  const dom = document.createElement("div");
-  dom.className = "cm-input-panel";
-  const input = document.createElement("input");
-  input.type = "text";
-  input.placeholder = "Element name (Enter to confirm, Esc to cancel)";
-  input.addEventListener("keydown", (ev) => {
-    if (ev.key === "Enter") {
-      ev.preventDefault();
-      const tag = input.value.trim();
-      view.dispatch({ effects: toggleEncloseWith.of(false) });
-      if (tag) {
-        wrapSelection(view, `<${tag}>`, `</${tag}>`);
-      }
-      view.focus();
-    } else if (ev.key === "Escape") {
-      ev.preventDefault();
-      view.dispatch({ effects: toggleEncloseWith.of(false) });
-      view.focus();
-    }
-  });
-  dom.appendChild(input);
-  return { top: false, dom, mount: () => setTimeout(() => input.focus(), 50) };
-}
 
 /**
  * A single-value CodeMirror field as a custom element. Set `value` and
@@ -143,7 +69,6 @@ export class CmField extends LitElement {
       syntaxHighlighting(highlightStyle, { fallback: true }),
       bracketMatching(),
       EditorView.lineWrapping,
-      encloseWithState,
       fieldTheme,
       EditorView.updateListener.of((u) => {
         if (u.docChanged && !this.syncing) {
@@ -159,7 +84,7 @@ export class CmField extends LitElement {
       }),
     ];
     if (this.language === "xml") {
-      extensions.push(xml());
+      extensions.push(xml(), xmlCommands());
     } else if (this.language === "css") {
       extensions.push(css());
     } else if (this.language === "xquery") {
@@ -204,85 +129,13 @@ export class CmField extends LitElement {
     this.view.focus();
   }
 
-  /** Find the innermost XML element node enclosing the given position. */
-  private enclosingElement(pos: number) {
-    const tree = syntaxTree(this.view!.state);
-    // Try both sides so a cursor sitting on a tag boundary (e.g. at the very
-    // start of the document, before any click into the editor) still resolves.
-    for (const side of [1, -1] as const) {
-      const node = tree.resolveInner(pos, side);
-      for (let cur: typeof node | null = node; cur; cur = cur.parent) {
-        if (cur.name === "Element") {
-          return cur;
-        }
-      }
+  /** Run one of the XML commands (used by the template toolbar). */
+  run(command: keyof typeof XML_COMMANDS) {
+    if (this.view) {
+      // focus first: surrounding moves it on to the prompt for the name
+      this.view.focus();
+      XML_COMMANDS[command].run(this.view);
     }
-    return null;
-  }
-
-  /** Extend each selection to cover the XML element around the cursor. */
-  selectElement() {
-    const view = this.view;
-    if (!view) {
-      return;
-    }
-    view.dispatch(
-      view.state.changeByRange((range) => {
-        const el = this.enclosingElement(range.from);
-        if (el) {
-          const sel = EditorSelection.range(el.from, el.to);
-          return { selection: sel, range: sel };
-        }
-        return { range };
-      })
-    );
-    view.focus();
-  }
-
-  /** Prompt for an element name and wrap the current selection in it. */
-  encloseWith() {
-    const view = this.view;
-    if (!view) {
-      return;
-    }
-    view.dispatch({
-      effects: toggleEncloseWith.of(!view.state.field(encloseWithState)),
-    });
-  }
-
-  /** Strip the start/end (or self-closing) tags of the enclosing element. */
-  removeEnclosing() {
-    const view = this.view;
-    if (!view) {
-      return;
-    }
-    view.dispatch(
-      view.state.changeByRange((range) => {
-        const el = this.enclosingElement(range.from);
-        const startTag = el?.firstChild;
-        const endTag = el?.lastChild;
-        if (!el || !startTag || !endTag) {
-          return { range };
-        }
-        if (startTag.name === "SelfClosingTag") {
-          return {
-            range: EditorSelection.cursor(startTag.from),
-            changes: [{ from: startTag.from, to: startTag.to, insert: "" }],
-          };
-        }
-        return {
-          range: EditorSelection.range(
-            startTag.from,
-            endTag.from - (startTag.to - startTag.from)
-          ),
-          changes: [
-            { from: startTag.from, to: startTag.to, insert: "" },
-            { from: endTag.from, to: endTag.to, insert: "" },
-          ],
-        };
-      })
-    );
-    view.focus();
   }
 }
 

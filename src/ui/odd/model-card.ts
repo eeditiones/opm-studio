@@ -20,6 +20,7 @@ import { ADD, COPY, PASTE, TRASH } from "./icons.ts";
 import type { CmField } from "./codemirror.ts";
 import { ModelOpenState, modelPathKey } from "./model-open-state.ts";
 import { validateTemplateXml } from "../../odd/templateValidation.ts";
+import { XML_COMMANDS, keyLabel } from "../xmlCommands.ts";
 
 const CUSTOM = "__custom__";
 
@@ -328,18 +329,18 @@ export class ModelCard extends LitElement {
           <span class="tmpl-tools">
             <button
               type="button"
-              aria-label="Select enclosing element"
-              @click=${() => cmField()?.selectElement()}
+              aria-label="Select element (${keyLabel(XML_COMMANDS.select.key)})"
+              @click=${() => cmField()?.run("select")}
             >&lt;|&gt;</button>
             <button
               type="button"
-              aria-label="Enclose selection in a new element"
-              @click=${() => cmField()?.encloseWith()}
+              aria-label="Surround with element (${keyLabel(XML_COMMANDS.surround.key)})"
+              @click=${() => cmField()?.run("surround")}
             >&lt;...&gt;</button>
             <button
               type="button"
-              aria-label="Remove enclosing tags"
-              @click=${() => cmField()?.removeEnclosing()}
+              aria-label="Remove element tags (${keyLabel(XML_COMMANDS.remove.key)})"
+              @click=${() => cmField()?.run("remove")}
             >&lt;X&gt;</button>
             <button
               type="button"
