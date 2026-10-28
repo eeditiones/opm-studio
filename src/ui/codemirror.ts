@@ -56,7 +56,7 @@ const LANGS: Record<Exclude<EditorKind, ''>, () => Extension[]> = { xml: () => [
 
 export interface Editor {
   getValue(): string;
-  /** Replace the text without reporting it as an edit. */
+  /** Show a new text, without reporting it as an edit and with an undo history of its own. */
   setValue(text: string, kind: EditorKind): void;
   /** Replace the text as an edit, touching only the span that differs so caret and scroll stay put. */
   replace(text: string): void;
@@ -73,27 +73,23 @@ export const remeasureEditors = (): void => editors.forEach(v => v.requestMeasur
 
 export function createEditor(parent: HTMLElement, onChange: () => void): Editor {
   const lang = new Compartment(), schemaExt = new Compartment();
-  let silent = false, shown = 0;
-  const view = new EditorView({
-    parent,
-    state: EditorState.create({
-      doc: '',
-      extensions: [
-        basicSetup, keymap.of([indentWithTab]), theme, syntaxHighlighting(highlightStyle), lang.of([]), schemaExt.of([]),
-        EditorView.updateListener.of(u => { if (u.docChanged && !silent) onChange(); }),
-      ],
-    }),
+  /** A state of its own for each text shown, so undo never reaches back into the one before. */
+  const stateFor = (text: string, kind: EditorKind) => EditorState.create({
+    doc: text,
+    extensions: [
+      basicSetup, keymap.of([indentWithTab]), theme, syntaxHighlighting(highlightStyle),
+      lang.of(kind ? LANGS[kind]() : []), schemaExt.of([]),
+      EditorView.updateListener.of(u => { if (u.docChanged) onChange(); }),
+    ],
   });
+  const view = new EditorView({ parent, state: stateFor('', '') });
   editors.add(view);
   return {
     getValue: () => view.state.doc.toString(),
     setValue(text, kind) {
-      silent = true;
-      view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text },
-        effects: [lang.reconfigure(kind ? LANGS[kind]() : []), schemaExt.reconfigure([])],
-        selection: { anchor: 0 }, scrollIntoView: true });
-      silent = false;
-      shown++;
+      // setState reports no change, so this is not taken for an edit
+      view.setState(stateFor(text, kind));
+      view.scrollDOM.scrollTop = 0;
     },
     useSchema(schema) {
       if (!schema) return;
