@@ -5,7 +5,7 @@ import { base, dirOf, exists, extOf, isOdd, normPath, readBytes, readText, write
 import { roleOf } from '../project/pipeline.ts';
 import { isText } from '../project/zip.ts';
 import { emit, on, state } from '../state.ts';
-import { createEditor, type EditorKind } from './codemirror.ts';
+import { createEditor, type EditorKind, type Validity } from './codemirror.ts';
 import { schemaFor } from './xmlSchema.ts';
 import { $, el } from './dom.ts';
 import { icon } from './icons.ts';
@@ -42,6 +42,8 @@ function show(p: string): void {
 function render(): void {
   const p = state.file, text = !!p && isText(p), visual = visualOdd(p);
   $('src').hidden = !text || visual; $('oddvis').hidden = !visual; $('preview').hidden = text || visual;
+  // the pill speaks for the source editor only
+  if (visual || !text) renderValidity(null);
   if (visual) showOdd(p);
   else if (text) show(p);
   else if (p) showBinary(p);
@@ -141,6 +143,16 @@ function renderKind(): void {
   for (const b of odd.children) b.setAttribute('aria-pressed', String((b as HTMLElement).dataset.v === state.oddView));
 }
 
+/** The pill beside the file's role: checking, valid, or how many problems. */
+function renderValidity(v: Validity): void {
+  const b = $('validity');
+  b.hidden = v === null;
+  if (v === null) return;
+  b.dataset.state = v === 'checking' ? 'checking' : v ? 'invalid' : 'valid';
+  b.textContent = v === 'checking' ? 'Checking…' : v ? `${v === 200 ? '200+' : v} ${v === 1 ? 'error' : 'errors'}` : 'Valid';
+  b.title = v === 'checking' ? 'Checking the document against its schema' : v ? 'Not valid against its schema. Click to go to the next problem (F8)' : 'Valid against its schema';
+}
+
 export function initEditor(): void {
   editor = createEditor($('src'), () => {
     if (!state.file) return;
@@ -148,7 +160,8 @@ export function initEditor(): void {
     renderKind();
     // opm.toml and ODDs decide the pipeline; other files only change the output
     emit(state.file === 'opm.toml' || extOf(state.file) === 'odd' ? 'config' : 'edit', 'edit');
-  });
+  }, renderValidity);
+  $('validity').onclick = () => { if ($('validity').dataset.state === 'invalid') editor.nextProblem(); };
   $('odd-doc').onclick = () => { if (state.file) { oddEditor.flush(); documentOdd(state.file); } };
   $('fmt').onclick = () => { if (state.file) editor.replace(formatOdd(editor.getValue())); };
   oddEditor = $<OddEditor>('oddvis');

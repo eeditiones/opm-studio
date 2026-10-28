@@ -106,6 +106,11 @@ main { flex: 1; min-height: 0; position: relative; display: grid; grid-template-
 #crumbs .last { color: var(--fg); }
 .role { font-size: 11px; font-weight: 600; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
 .role[hidden] { display: none; }
+/* how the open XML stands against its schema; a click goes to the next problem */
+.validity { flex: none; font: 600 11px var(--sans); border: 0; border-radius: 999px; padding: 2px 8px; white-space: nowrap; color: var(--muted); background: var(--panel-2); cursor: default; }
+.validity[hidden] { display: none; }
+.validity[data-state=valid] { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); }
+.validity[data-state=invalid] { color: var(--err); background: color-mix(in srgb, var(--err) 14%, transparent); cursor: pointer; }
 
 .seg { flex: none; display: flex; gap: 1px; padding: 2px; background: var(--panel); border: 1px solid var(--btn-line); border-radius: 7px; min-width: 0; overflow: hidden; }
 .seg.small { border-radius: 6px; gap: 2px; }

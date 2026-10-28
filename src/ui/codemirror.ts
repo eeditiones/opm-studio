@@ -5,7 +5,7 @@ import { indentWithTab } from '@codemirror/commands';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
 import { xml, xmlLanguage } from '@codemirror/lang-xml';
-import { linter, lintGutter, type Diagnostic } from '@codemirror/lint';
+import { linter, lintGutter, nextDiagnostic, type Diagnostic } from '@codemirror/lint';
 import { css } from '@codemirror/lang-css';
 import { html } from '@codemirror/lang-html';
 import { StreamLanguage } from '@codemirror/language';
@@ -62,7 +62,12 @@ export interface Editor {
   replace(text: string): void;
   /** Check the XML against this schema after each pause in typing, and complete from it; null for none. */
   useSchema(schema: Schema | null): void;
+  /** Select the next problem the check found, after the cursor. */
+  nextProblem(): void;
 }
+
+/** How the text shown stands against its schema: not checked, being checked, or the number of problems. */
+export type Validity = null | 'checking' | number;
 
 /** How long typing has to pause before the document is checked again. */
 const VALIDATE_DELAY = 400;
@@ -71,7 +76,7 @@ const editors = new Set<EditorView>();
 /** Have the editors measure their lines again, after a font or size change. */
 export const remeasureEditors = (): void => editors.forEach(v => v.requestMeasure());
 
-export function createEditor(parent: HTMLElement, onChange: () => void): Editor {
+export function createEditor(parent: HTMLElement, onChange: () => void, onValidity: (v: Validity) => void = () => {}): Editor {
   const lang = new Compartment(), schemaExt = new Compartment();
   /** A state of its own for each text shown, so undo never reaches back into the one before. */
   const stateFor = (text: string, kind: EditorKind) => EditorState.create({
@@ -90,23 +95,32 @@ export function createEditor(parent: HTMLElement, onChange: () => void): Editor 
       // setState reports no change, so this is not taken for an edit
       view.setState(stateFor(text, kind));
       view.scrollDOM.scrollTop = 0;
+      onValidity(null);
     },
     useSchema(schema) {
       if (!schema) return;
       const check = async (v: EditorView): Promise<Diagnostic[]> => {
-        const text = v.state.doc.toString();
+        const doc = v.state.doc, text = doc.toString();
         try {
-          // the linter drops what arrives for a document that has changed since
-          return (await schema.validate(text)).map(p => ({ from: Math.min(p.from, text.length), to: Math.min(p.to, text.length), severity: 'error', message: p.message }));
+          const found = (await schema.validate(text)).map(p => ({ from: Math.min(p.from, text.length), to: Math.min(p.to, text.length), severity: 'error' as const, message: p.message }));
+          // the linter drops what arrives for a document that has changed since; so does the count
+          if (view.state.doc === doc) onValidity(found.length);
+          return found;
         } catch (e) {
           console.warn('Validation is off:', e);
+          if (view.state.doc === doc) onValidity(null);
           return [];
         }
       };
+      onValidity('checking');
       view.dispatch({ effects: schemaExt.reconfigure([
         linter(check, { delay: VALIDATE_DELAY }), lintGutter(),
         xmlLanguage.data.of({ autocomplete: schemaCompletion(schema) }),
       ]) });
+    },
+    nextProblem() {
+      view.focus();
+      nextDiagnostic(view);
     },
     replace(text) {
       const old = view.state.doc.toString();
