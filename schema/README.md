@@ -1,6 +1,6 @@
 # Default schemas
 
-The RELAX NG schemas the editor checks and completes TEI, DocBook and JATS documents against when they name no schema of their own, as their publishers distribute them, each with the files it includes. `npm run schemas` (`scripts/schemas.py`) downloads them again; they remain under each standard's terms, not OPM Studio's AGPL.
+The RELAX NG schemas the editor checks and completes documents against when they name no schema of their own: TEI, DocBook and JATS as their publishers distribute them, each with the files it includes, and a schema for ODDs compiled from TEI Publisher's customization. `npm run schemas` (`scripts/schemas.py`) writes them again; they remain under their own terms, not OPM Studio's AGPL.
 
 ## tei/
 
@@ -35,3 +35,7 @@ The JATS 1.3 Archiving RELAX NG with MathML 3, <https://jats.nlm.nih.gov/archivi
 
 > This DTD is in the public domain. An organization that wishes to create its
 > own DTD from the suite may do so without permission from NLM.
+
+## odd/
+
+`teipublisher_odds.rng`, compiled with `opm odd compile --format rng` from `teipublisher_odds.odd` in [jinks](https://github.com/eeditiones/jinks/blob/main/profiles/base10/resources/odd/teipublisher_odds.odd), "TEI Publisher Customization for ODD Authoring" by Wolfgang Meier, distributed under the [Creative Commons Attribution-ShareAlike 3.0 Unported License](http://creativecommons.org/licenses/by-sa/3.0/). It builds on TEI P5, © the TEI Consortium, under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) and the [BSD 2-Clause licence](https://opensource.org/license/bsd-2-clause).

@@ -42,7 +42,9 @@ The source editor validates XML documents and offers completions based on a RELA
 
 1. the `.rng` file named by the document's `<?xml-model?>` instruction, if it exists in the project;
 2. otherwise the schema set in `opm.toml` with `[editor] schema = "path/to/schema.rng"`;
-3. otherwise, for TEI, DocBook and JATS documents, the complete schema of that format from `schema/<name>/`. `npm run schemas` downloads these files; `scripts/schemas.py` lists the versions, and `src/ui/xmlSchema.ts` lists the main file of each.
+3. otherwise, for TEI, DocBook and JATS documents, the complete schema of that format from `schema/<name>/`, and for ODDs `schema/odd/teipublisher_odds.rng`: TEI with TEI Publisher's `pb:` extensions. `npm run schemas` downloads the first three and compiles the ODD schema from jinks' `teipublisher_odds.odd` with `opm odd compile --format rng` (from checkouts of jinks and opm beside this one if there are any); `scripts/schemas.py` lists the versions, and `src/ui/xmlSchema.ts` lists the main file of each.
+
+ODDs skip step 2: `[editor] schema` is meant for the project's documents.
 
 Validation and completion run in a Web Worker (`src/runtime/validator.ts`, bundled as `dist/validator.js`) using [salve-annos](https://www.npmjs.com/package/salve-annos). The worker converts each schema into a grammar the first time it is needed and keeps it for the rest of the session. A project schema is sent to the worker together with all other `.rng` files in the project, so that its `include` and `externalRef` links resolve; a default schema is fetched from the site together with the files it includes.
 

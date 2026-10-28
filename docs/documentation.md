@@ -128,14 +128,14 @@ For each XML document, OPM Studio looks for a schema in this order:
    ```
 
    Locations pointing at a web address (`https://…`) are skipped: the web browser is not allowed to load schemas from external locations.
-2. **The `[editor]` section of `opm.toml`**, naming a schema for every document in the project that has no `<?xml-model?>` of its own. The path is relative to the project folder:
+2. **The `[editor]` section of `opm.toml`**, naming a schema for every document in the project that has no `<?xml-model?>` of its own. It does not apply to ODD files. The path is relative to the project folder:
 
    ```toml
    [editor]
    schema = "schema/letters.rng"
    ```
 
-3. **TEI, DocBook and JATS documents** without either get the complete TEI P5, DocBook 5.2 and JATS 1.3 Archiving (with MathML 3) schema respectively, recognized by the document's namespace, root element or doctype.
+3. **TEI, DocBook and JATS documents** get the complete TEI P5, DocBook 5.2 and JATS 1.3 Archiving (with MathML 3) schema respectively, recognized by the document's namespace, root element or doctype.
 4. Other documents are neither checked nor completed.
 
 ### Using your own RELAX NG schema
