@@ -52,6 +52,15 @@ test('tei.json: completion offers what TEI allows where the cursor is', () => {
   assert.ok(complete(tei, '<TEI><text><body><p |></p></body></text></TEI>').includes('rend'));
 });
 
+for (const name of ['docbook', 'jats']) {
+  test(`${name}.json: article is offered at the root and has children`, () => {
+    const s = completionSchema(JSON.parse(readFileSync(new URL(`../../schema/${name}.json`, import.meta.url), 'utf8')));
+    const article = s.elements.find(e => e.name === 'article');
+    assert.ok(article?.top && article.children?.length);
+    assert.ok(complete(s, '|').includes('<article'));
+  });
+}
+
 test('opm JSON: elements follow the schema and its start', () => {
   const s = completionSchema(fromRng);
   assert.deepEqual(complete(s, '|'), ['<doc']);

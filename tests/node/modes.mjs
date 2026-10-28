@@ -73,15 +73,3 @@ for (const [ex, odd] of [['jats', 'odd/jats.odd'], ['shakespeare', null]]) {
     console.log('rng completion FAIL', JSON.stringify(s).slice(0, 300)); process.exitCode = 1;
   } else console.log('rng completion', s.elements.map(e => e.name).join(', '));
 }
-
-// the DocBook and JATS examples ship their completion JSON, named by [editor] schema
-for (const [ex, root] of [['docbook', 'article'], ['jats', 'article']]) {
-  const dir = '/proj-schema-' + ex;
-  py.globals.get('copy_example')(dir, ex, true);
-  const file = py.FS.readFile(dir + '/opm.toml', { encoding: 'utf8' }).match(/^\[editor\][^[]*?^schema\s*=\s*"([^"]+)"/m)?.[1];
-  const s = file && JSON.parse(py.FS.readFile(`${dir}/${file}`, { encoding: 'utf8' }));
-  const top = s?.elements.find(e => e.name === root);
-  if (!file?.endsWith('.json') || !top?.top || !top.children.length) {
-    console.log('example schema', ex, 'FAIL', file); process.exitCode = 1;
-  } else console.log('example schema', ex, file, `${s.elements.length} elements`);
-}
