@@ -1,10 +1,11 @@
-// ── which completion schema an XML file gets ──────────────────────────────
+// ── which schema an XML file gets, for completion and for validation ──────
 // 1. an RNG in the project named by the file's <?xml-model?>, or by [editor] schema in opm.toml,
-//    which may also name the JSON runtime/completion_schema.py wrote from one
-// 2. for TEI, DocBook and JATS, the whole of their schema (schema/<name>.json, fetched once;
-//    npm run schemas writes them)
+//    which may also name the JSON runtime/completion_schema.py wrote from one (completion only)
+// 2. for TEI, DocBook and JATS, the whole of their schema (schema/<name>.json and
+//    <name>.salve.json, fetched once; npm run schemas writes them)
 import { completionFromRng } from '../runtime/opm.ts';
-import { config, dirOf, exists, normPath, readText } from '../project/fs.ts';
+import { validateText, type Problem, type SchemaSource } from '../runtime/validation.ts';
+import { config, dirOf, exists, normPath, projectFiles, readText } from '../project/fs.ts';
 import { tomlString } from '../project/toml.ts';
 import { on, state } from '../state.ts';
 import { completionSchema, type XmlSchema } from './completionSchema.ts';
@@ -14,8 +15,11 @@ function vocabulary(text: string): string {
   const head = text.slice(0, 5000);
   if (head.includes('http://www.tei-c.org/ns/1.0') || /<(TEI|teiCorpus)[\s>]/.test(head)) return 'tei';
   if (head.includes('http://docbook.org/ns/docbook')) return 'docbook';
-  // JATS has no namespace: its doctype, or the dtd-version on its root
-  if (/<!DOCTYPE\s+article\s+PUBLIC\s+"-\/\/NLM\/\/DTD/.test(head) || /<article\s[^>]*\bdtd-version=/.test(head)) return 'jats';
+  // JATS has no namespace: its doctype, or an <article> without one (DocBook's has its own)
+  // that says it is JATS by @dtd-version, @article-type or its <front>
+  if (/<!DOCTYPE\s+article\s+PUBLIC\s+"-\/\/NLM\/\/DTD/.test(head)) return 'jats';
+  const article = head.match(/<article(?=[\s>])[^>]*>/)?.[0];
+  if (article && !/\sxmlns\s*=/.test(article) && (/\s(dtd-version|article-type)\s*=/.test(article) || /<front[\s>]/.test(head))) return 'jats';
   return '';
 }
 
@@ -35,8 +39,11 @@ function fullSchema(name: string): Promise<XmlSchema | null> {
 
 /** Schemas read from project files; dropped whenever project files may have changed. */
 const fromProject = new Map<string, Promise<XmlSchema | null>>();
-on(['project', 'files', 'config'], () => fromProject.clear());
-on('edit', () => { if (/\.(rng|json)$/i.test(state.file)) fromProject.clear(); });
+/** Goes up with every such change, so the validation worker reads project RNGs afresh. */
+let generation = 0;
+const changed = () => { fromProject.clear(); generation++; };
+on(['project', 'files', 'config'], changed);
+on('edit', () => { if (/\.(rng|json)$/i.test(state.file)) changed(); });
 
 /** The schema file for file p: an RNG from its own <?xml-model?> first, then opm.toml's [editor] schema. */
 function schemaFile(p: string, text: string): string {
@@ -67,4 +74,29 @@ export function schemaFor(p: string, text: string): Promise<XmlSchema | null> {
     return s.then(r => r ?? fullSchema(vocabulary(text)));
   }
   return fullSchema(vocabulary(text));
+}
+
+/** A default grammar for validation, as JSON text. */
+const salveJson = (name: string): Promise<SchemaSource> =>
+  fetch(new URL(`schema/${name}.salve.json`, document.baseURI))
+    .then(r => { if (!r.ok) throw new Error(`schema/${name}.salve.json could not be loaded: ${r.status}`); return r.text(); })
+    .then(json => ({ json }));
+
+/** A project RNG, with every RNG in the project for its include and externalRef to find. */
+function projectRng(file: string): Promise<SchemaSource> {
+  const files: Record<string, string> = {};
+  for (const f of projectFiles()) if (/\.rng$/i.test(f)) files[f] = readText(f);
+  return Promise.resolve({ main: file, files });
+}
+
+/** A check of file p's text against its RELAX NG schema, or null when it has none. */
+export function validatorFor(p: string, text: string): ((text: string) => Promise<Problem[]>) | null {
+  const file = schemaFile(p, text);
+  if (/\.rng$/i.test(file)) {
+    const key = `${state.dir}/${file}#${generation}`;
+    return t => validateText(key, () => projectRng(file), t);
+  }
+  const name = vocabulary(text);
+  if (!name) return null;
+  return t => validateText(`default:${name}`, () => salveJson(name), t);
 }

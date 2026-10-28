@@ -113,7 +113,7 @@ Firefox and Safari do not allow web pages to write to folders, so these options 
 
 While you edit an XML document, the editor suggests the elements allowed at the cursor, their attributes and values, each with a description (if provided). Suggestions appear as you type `<` or an attribute name; press <kbd>Ctrl</kbd>+<kbd>Space</kbd> to ask for them anywhere (on a Mac, <kbd>Option</kbd>+<kbd>I</kbd> works too).
 
-Autocompletion knows *which* elements and attributes may appear inside an element, not in which order or how many of them are required. It helps you write valid markup, but it does not check that a document is valid.
+Autocompletion knows *which* elements and attributes may appear inside an element, not in which order or how many of them are required. It helps you write valid markup; checking that a document is valid is the job of validation (below).
 
 For autocompletion to work, the editor needs a JSON specification. OPM Studio ships with default specifications for complete TEI p5, Docbook and JATS. For other XML languages or specific customizations, a JSON can be derived automatically from an RELAX NG schema.
 
@@ -149,3 +149,11 @@ A few things to keep in mind:
 - A schema split over several files, joined with `include` or `externalRef`, needs all of them. Upload them together, so they land in the same folder and the relative links between them still work.
 - For a customized TEI, export the RELAX NG from your ODD, for example with [Roma](https://roma.tei-c.org/) or [TEIGarage](https://teigarage.tei-c.org/).
 - A large schema takes up to a second to read the first time a document using it is opened. The editor stays usable meanwhile and the suggestions appear once the schema is ready.
+
+## Validation
+
+The editor also checks each XML document against its RELAX NG schema, the one found in the order above, and against the complete TEI, DocBook or JATS schema for documents without one. A short pause in typing is enough: problems are underlined, marked with a dot beside the line number, and explained when you point at them, for example *`<div>` is not allowed here* or *"maybe" is not a valid value for @cert*.
+
+- Validation needs a RELAX NG schema. When `[editor] schema` names a JSON completion file, documents get suggestions from it, and TEI, DocBook and JATS documents are checked against the complete schema instead.
+- A syntax error, such as a tag that is not closed, is reported on its own: the checks against the schema stop there until it is fixed.
+- Schematron rules, whether in a separate file or embedded in the schema, are not checked.

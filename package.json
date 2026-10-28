@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "OPM Studio: transform XML with the Open Processing Model, entirely in the browser",
   "scripts": {
-    "build": "esbuild app=src/main.ts docworker=src/runtime/docworker.ts --bundle --format=esm --target=es2022 --loader:.py=text --outdir=dist --minify --sourcemap",
-    "dev": "esbuild app=src/main.ts docworker=src/runtime/docworker.ts --bundle --format=esm --target=es2022 --loader:.py=text --outdir=dist --sourcemap --watch --servedir=.",
+    "build": "esbuild app=src/main.ts docworker=src/runtime/docworker.ts validator=src/runtime/validator.ts --bundle --format=esm --target=es2022 --loader:.py=text --outdir=dist --minify --sourcemap",
+    "dev": "esbuild app=src/main.ts docworker=src/runtime/docworker.ts validator=src/runtime/validator.ts --bundle --format=esm --target=es2022 --loader:.py=text --outdir=dist --sourcemap --watch --servedir=.",
     "check": "tsc --noEmit && tsc --noEmit -p tests",
     "test": "node --test 'tests/unit/*.test.ts' && node tests/node/modes.mjs",
     "test:py": "uv run --no-project --with lxml --with pytest pytest -q tests/python",
@@ -21,6 +21,7 @@
     "@codemirror/lang-xml": "^6.1.0",
     "@codemirror/language": "^6.12.4",
     "@codemirror/legacy-modes": "^6.5.4",
+    "@codemirror/lint": "^6.9.7",
     "@codemirror/state": "^6.7.6",
     "@codemirror/view": "^6.43.13",
     "@lezer/highlight": "^1.2.5",
@@ -29,7 +30,9 @@
     "codemirror": "^6.0.2",
     "fflate": "^0.8.3",
     "lit": "^3.3.3",
-    "pyodide": "^314.0.7"
+    "pyodide": "^314.0.7",
+    "salve-annos": "^1.2.5",
+    "saxes": "^6.0.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",

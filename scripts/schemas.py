@@ -1,7 +1,9 @@
-"""Write the default completion schemas the editor falls back to, schema/<name>.json.
+"""Write the default schemas the editor falls back to: schema/<name>.json for completion,
+schema/<name>.salve.json for validation.
 
-Each is downloaded from its publisher as RELAX NG, with every file it includes,
-and turned into JSON by src/runtime/completion_schema.py::
+Each is downloaded from its publisher as RELAX NG, with every file it includes, and
+turned into JSON by src/runtime/completion_schema.py and by salve
+(scripts/salve-schemas.mjs)::
 
     npm run schemas            # all of them
     npm run schemas -- jats    # one
@@ -10,6 +12,7 @@ and turned into JSON by src/runtime/completion_schema.py::
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -54,6 +57,7 @@ def main(names: list[str]) -> int:
         with tempfile.TemporaryDirectory() as tmp:
             rng = download(url, url.rsplit('/', 1)[0] + '/', Path(tmp), set())
             data = from_rng(rng)
+            subprocess.run(['node', str(ROOT / 'scripts' / 'salve-schemas.mjs'), name, str(rng)], check=True)
         out = ROOT / 'schema' / f'{name}.json'
         out.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
         print(f'Wrote {out.relative_to(ROOT)} ({len(data["elements"])} elements) from {url}')
