@@ -20,9 +20,6 @@ for (const m of ['web','markdown','json','docx','typst','epub']) {
 }
 
 // chunked output through glue.py, as the chunk mode calls it
-py.FS.mkdirTree('/studio');
-py.FS.writeFile('/studio/completion_schema.py', fs.readFileSync('src/runtime/completion_schema.py'));
-py.runPython(`import sys; sys.path.insert(0, '/studio')`);
 py.runPython(fs.readFileSync('src/runtime/glue.py', 'utf8'));
 for (const ex of ['jats', 'shakespeare']) {
   const sample = py.globals.get('copy_example')('/proj-' + ex, ex, true);
@@ -57,19 +54,4 @@ for (const [ex, odd] of [['jats', 'odd/jats.odd'], ['shakespeare', null]]) {
   const pages = (run.files ?? []).filter(f => f.endsWith('.html'));
   if (!run.landing || pages.length < 2) { console.log('odd document', target, 'FAIL', JSON.stringify(run).slice(0, 300)); process.exitCode = 1; }
   else console.log('odd document', target, `${pages.length} pages, landing ${run.landing}, ${Math.round(performance.now() - t)} ms`);
-}
-
-// autocompletion from a project's RELAX NG schema, as the source editor asks for it
-{
-  const rng = (body) => `<grammar xmlns="http://relaxng.org/ns/structure/1.0">${body}</grammar>`;
-  py.FS.mkdirTree('/proj-rng/schema');
-  py.FS.writeFile('/proj-rng/schema/main.rng', rng(`<start><element name="doc"><zeroOrMore><ref name="block"/></zeroOrMore></element></start><include href="blocks.rng"/>`));
-  py.FS.writeFile('/proj-rng/schema/blocks.rng', rng(`<define name="block"><element name="para"><attribute name="role"><choice><value>note</value><value>tip</value></choice></attribute><text/></element></define>`));
-  const s = JSON.parse(py.globals.get('completion_from_rng')('/proj-rng', 'schema/main.rng'));
-  const doc = s.elements.find(e => e.name === 'doc'), para = s.elements.find(e => e.name === 'para');
-  const role = [...(para?.attributes ?? []), ...s.attributes].find(a => a.name === 'role' || a === 'role');
-  const values = (typeof role === 'string' ? s.attributes.find(a => a.name === role) : role)?.values;
-  if (!doc?.top || doc.children.join() !== 'para' || values?.join() !== 'note,tip') {
-    console.log('rng completion FAIL', JSON.stringify(s).slice(0, 300)); process.exitCode = 1;
-  } else console.log('rng completion', s.elements.map(e => e.name).join(', '));
 }

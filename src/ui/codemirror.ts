@@ -4,7 +4,7 @@ import { keymap, lineNumbers, Decoration, ViewPlugin, MatchDecorator, type Decor
 import { indentWithTab } from '@codemirror/commands';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
-import { xml } from '@codemirror/lang-xml';
+import { xml, xmlLanguage } from '@codemirror/lang-xml';
 import { linter, lintGutter, type Diagnostic } from '@codemirror/lint';
 import { css } from '@codemirror/lang-css';
 import { html } from '@codemirror/lang-html';
@@ -12,8 +12,8 @@ import { StreamLanguage } from '@codemirror/language';
 import { toml } from '@codemirror/legacy-modes/mode/toml';
 import { python } from '@codemirror/legacy-modes/mode/python';
 import { json } from '@codemirror/legacy-modes/mode/javascript';
-import type { XmlSchema } from './completionSchema.ts';
-import type { Problem } from '../runtime/validation.ts';
+import { schemaCompletion } from './xmlCompletion.ts';
+import type { Schema } from './xmlSchema.ts';
 
 export const highlightStyle = HighlightStyle.define([
   { tag: [t.tagName, t.angleBracket, t.typeName, t.className, t.keyword], color: 'var(--tag)' },
@@ -60,10 +60,8 @@ export interface Editor {
   setValue(text: string, kind: EditorKind): void;
   /** Replace the text as an edit, touching only the span that differs so caret and scroll stay put. */
   replace(text: string): void;
-  /** XML with autocompletion from this schema once it arrives, if the same text is still shown. */
-  useSchema(schema: Promise<XmlSchema | null>): void;
-  /** Mark what check reports, again after each pause in typing; null for none. */
-  useValidation(check: ((text: string) => Promise<Problem[]>) | null): void;
+  /** Check the XML against this schema after each pause in typing, and complete from it; null for none. */
+  useSchema(schema: Schema | null): void;
 }
 
 /** How long typing has to pause before the document is checked again. */
@@ -74,14 +72,14 @@ const editors = new Set<EditorView>();
 export const remeasureEditors = (): void => editors.forEach(v => v.requestMeasure());
 
 export function createEditor(parent: HTMLElement, onChange: () => void): Editor {
-  const lang = new Compartment(), lint = new Compartment();
+  const lang = new Compartment(), schemaExt = new Compartment();
   let silent = false, shown = 0;
   const view = new EditorView({
     parent,
     state: EditorState.create({
       doc: '',
       extensions: [
-        basicSetup, keymap.of([indentWithTab]), theme, syntaxHighlighting(highlightStyle), lang.of([]), lint.of([]),
+        basicSetup, keymap.of([indentWithTab]), theme, syntaxHighlighting(highlightStyle), lang.of([]), schemaExt.of([]),
         EditorView.updateListener.of(u => { if (u.docChanged && !silent) onChange(); }),
       ],
     }),
@@ -92,28 +90,27 @@ export function createEditor(parent: HTMLElement, onChange: () => void): Editor 
     setValue(text, kind) {
       silent = true;
       view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text },
-        effects: [lang.reconfigure(kind ? LANGS[kind]() : []), lint.reconfigure([])],
+        effects: [lang.reconfigure(kind ? LANGS[kind]() : []), schemaExt.reconfigure([])],
         selection: { anchor: 0 }, scrollIntoView: true });
       silent = false;
       shown++;
     },
     useSchema(schema) {
-      const my = shown;
-      void schema.then(s => { if (s && my === shown) view.dispatch({ effects: lang.reconfigure(xml(s)) }); });
-    },
-    useValidation(check) {
-      if (!check) return;
-      const source = async (v: EditorView): Promise<Diagnostic[]> => {
+      if (!schema) return;
+      const check = async (v: EditorView): Promise<Diagnostic[]> => {
         const text = v.state.doc.toString();
         try {
           // the linter drops what arrives for a document that has changed since
-          return (await check(text)).map(p => ({ from: Math.min(p.from, text.length), to: Math.min(p.to, text.length), severity: 'error', message: p.message }));
+          return (await schema.validate(text)).map(p => ({ from: Math.min(p.from, text.length), to: Math.min(p.to, text.length), severity: 'error', message: p.message }));
         } catch (e) {
           console.warn('Validation is off:', e);
           return [];
         }
       };
-      view.dispatch({ effects: lint.reconfigure([linter(source, { delay: VALIDATE_DELAY }), lintGutter()]) });
+      view.dispatch({ effects: schemaExt.reconfigure([
+        linter(check, { delay: VALIDATE_DELAY }), lintGutter(),
+        xmlLanguage.data.of({ autocomplete: schemaCompletion(schema) }),
+      ]) });
     },
     replace(text) {
       const old = view.state.doc.toString();

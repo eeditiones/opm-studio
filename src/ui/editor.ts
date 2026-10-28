@@ -6,7 +6,7 @@ import { roleOf } from '../project/pipeline.ts';
 import { isText } from '../project/zip.ts';
 import { emit, on, state } from '../state.ts';
 import { createEditor, type EditorKind } from './codemirror.ts';
-import { schemaFor, validatorFor } from './xmlSchema.ts';
+import { schemaFor } from './xmlSchema.ts';
 import { $, el } from './dom.ts';
 import { icon } from './icons.ts';
 import { formatOdd } from '../odd/oddFormat.ts';
@@ -36,9 +36,7 @@ const visualOdd = (p: string) => !!p && state.oddView === 'visual' && isOdd(p);
 function show(p: string): void {
   const text = readText(p), kind = editorKind(p);
   editor.setValue(text, kind);
-  if (kind !== 'xml') return;
-  editor.useSchema(schemaFor(p, text));
-  editor.useValidation(validatorFor(p, text));
+  if (kind === 'xml') editor.useSchema(schemaFor(p, text));
 }
 
 function render(): void {

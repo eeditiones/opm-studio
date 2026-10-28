@@ -7,7 +7,6 @@
     "dev": "esbuild app=src/main.ts docworker=src/runtime/docworker.ts validator=src/runtime/validator.ts --bundle --format=esm --target=es2022 --loader:.py=text --outdir=dist --sourcemap --watch --servedir=.",
     "check": "tsc --noEmit && tsc --noEmit -p tests",
     "test": "node --test 'tests/unit/*.test.ts' && node tests/node/modes.mjs",
-    "test:py": "uv run --no-project --with lxml --with pytest pytest -q tests/python",
     "schemas": "uv run --no-project --with lxml scripts/schemas.py"
   },
   "keywords": [],
@@ -15,6 +14,7 @@
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "dependencies": {
+    "@codemirror/autocomplete": "^6.20.4",
     "@codemirror/commands": "^6.11.1",
     "@codemirror/lang-css": "^6.3.1",
     "@codemirror/lang-html": "^6.4.12",

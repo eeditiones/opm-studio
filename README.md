@@ -38,9 +38,16 @@ The documentation site in `docs/` is built with VitePress and deployed with the 
 
 The `chunk` output mode runs `opm chunk` and writes the pages to `/tmp/opm-chunks/` in Pyodide, outside the project. `src/ui/previews/site.ts` copies them into Cache Storage under `preview/<run>/`, and `sw.js` serves that path to the preview frame as a static server would. The rendered web and print previews take the same route when their template links assets (`[transform.web] assets`): the page and its `assets/` folder are published together, as `opm transform -o` writes them.
 
-XML sources get element, attribute and value completion from a RELAX NG schema in the project: the one their `<?xml-model href="….rng"?>` names, or `[editor] schema = "path/to/schema.rng"` in `opm.toml`. `src/runtime/completion_schema.py` reads it in Pyodide, and `[editor] schema` may instead name the JSON that script writes when run on its own (`uv run --with lxml src/runtime/completion_schema.py schema.rng -o schema.json`; its tests: `npm run test:py`), which skips the parse; `src/ui/xmlSchema.ts` keeps the result until project files change. TEI, DocBook and JATS sources without one fall back to `schema/tei.json`, `docbook.json` or `jats.json`, fetched the first time one is needed: that script's output for the full RELAX NG of each, which `npm run schemas` downloads and converts again (`scripts/schemas.py` names the versions).
+The source editor validates XML documents and offers completions based on a RELAX NG schema. `src/ui/xmlSchema.ts` picks the schema for each document:
 
-The same schemas validate the source as you type. `src/runtime/validator.ts`, bundled as `dist/validator.js`, is a Web Worker running [salve-annos](https://www.npmjs.com/package/salve-annos): it converts a project RNG (with the other RNGs in the project for its includes) or loads `schema/<name>.salve.json`, which `npm run schemas` writes for the defaults, and `src/runtime/validate.ts` feeds it the document through saxes and turns its errors into the ranges the editor marks with `@codemirror/lint`.
+1. the `.rng` file named by the document's `<?xml-model?>` instruction, if it exists in the project;
+2. otherwise the schema set in `opm.toml` with `[editor] schema = "path/to/schema.rng"`;
+3. otherwise, for TEI, DocBook and JATS documents, the complete schema of that format from `schema/<name>/`. `npm run schemas` downloads these files; `scripts/schemas.py` lists the versions, and `src/ui/xmlSchema.ts` lists the main file of each.
+
+Validation and completion run in a Web Worker (`src/runtime/validator.ts`, bundled as `dist/validator.js`) using [salve-annos](https://www.npmjs.com/package/salve-annos). The worker converts each schema into a grammar the first time it is needed and keeps it for the rest of the session. A project schema is sent to the worker together with all other `.rng` files in the project, so that its `include` and `externalRef` links resolve; a default schema is fetched from the site together with the files it includes.
+
+- `src/runtime/validate.ts` parses the document with saxes, passes it to the grammar, and returns each error with its position, which the editor underlines using `@codemirror/lint`.
+- `src/runtime/complete.ts` passes the text before the cursor to the grammar and returns the elements, attributes or values allowed at that point, together with the descriptions from the schema's documentation. `src/ui/xmlCompletion.ts` shows them as completions.
 
 The ODD editor's Document button runs `opm odd document` on the open ODD. Because a TEI customization takes close to a minute, it runs in a Web Worker with its own Pyodide (`src/runtime/docworker.ts`, bundled as `dist/docworker.js`), and the site is shown through the same `preview/` route. opm merges TEI customizations onto `p5all.xml.gz`, which it would download from a GitHub release. The browser cannot fetch that cross-origin, so the Pages build puts it in `dist/` beside the wheel. For local development, download it once:
 
@@ -54,6 +61,6 @@ Copyright (C) 2026 e-editiones
 
 OPM Studio is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. See [LICENSE](LICENSE).
 
-The default completion schemas in `schema/` are derived from the TEI, DocBook and JATS schemas and stay under their terms; see [schema/README.md](schema/README.md).
+The default schemas in `schema/` are the TEI, DocBook and JATS schemas and stay under their terms; see [schema/README.md](schema/README.md).
 
 The opm logo is a trademark of its owners and is not covered by this licence.

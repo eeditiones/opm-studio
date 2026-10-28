@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { convertRNGToPattern, readTreeFromJSON, type Resource } from 'salve-annos';
+import { convertRNGToPattern, type Resource } from 'salve-annos';
 import { validate, type Problem } from '../../src/runtime/validate.ts';
 
-const tei = readTreeFromJSON(JSON.parse(readFileSync(new URL('../../schema/tei.salve.json', import.meta.url), 'utf8')));
+const tei = (await convertRNGToPattern(new URL('../../schema/tei/tei_all.rng', import.meta.url))).pattern;
 const sample = readFileSync(new URL('../../sample.xml', import.meta.url), 'utf8');
 
 /** What each problem marks, with its message. */

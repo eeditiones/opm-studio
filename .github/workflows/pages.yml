@@ -58,7 +58,6 @@ jobs:
       - run: npm test
         env:
           OPM_DIR: opm
-      - run: npm run test:py
 
       - name: Build the documentation
         working-directory: docs

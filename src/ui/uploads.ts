@@ -54,7 +54,7 @@ async function takeFiles(list: FileList | File[], folder?: string): Promise<void
   if (newOdd && oddPath() !== newOdd && await ask({ title: 'Use as project ODD?', name: newOdd, text: ' was added. Make it the ODD this project transforms with?', ok: 'Use it' })) {
     writeFile('opm.toml', setToml(readText('opm.toml'), 'transform', 'odd', newOdd));
   }
-  if (newSchema && tomlString(config(), 'editor', 'schema') !== newSchema && await ask({ title: 'Use for autocompletion?', name: newSchema, text: ' was added. Make it the schema the editor suggests elements and attributes from, for every document without an <?xml-model?> of its own?', ok: 'Use it' })) {
+  if (newSchema && tomlString(config(), 'editor', 'schema') !== newSchema && await ask({ title: 'Use as project schema?', name: newSchema, text: ' was added. Make it the schema the editor checks documents against and suggests elements and attributes from, for every document without an <?xml-model?> of its own?', ok: 'Use it' })) {
     writeFile('opm.toml', setToml(readText('opm.toml'), 'editor', 'schema', newSchema));
   }
   if (newXml) state.xml = newXml;

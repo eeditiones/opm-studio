@@ -1,20 +1,18 @@
-"""Write the default schemas the editor falls back to: schema/<name>.json for completion,
-schema/<name>.salve.json for validation.
+"""Download the default schemas the editor falls back to, into schema/<name>/.
 
-Each is downloaded from its publisher as RELAX NG, with every file it includes, and
-turned into JSON by src/runtime/completion_schema.py and by salve
-(scripts/salve-schemas.mjs)::
+Each is the publisher's RELAX NG, with every file it includes at its relative path,
+so the validation worker (src/runtime/validator.ts) converts it as it is::
 
     npm run schemas            # all of them
     npm run schemas -- jats    # one
+
+src/ui/xmlSchema.ts names the main file of each.
 """
 
 from __future__ import annotations
 
-import json
-import subprocess
+import shutil
 import sys
-import tempfile
 from pathlib import Path
 from urllib.parse import urljoin
 from urllib.request import urlopen
@@ -22,8 +20,7 @@ from urllib.request import urlopen
 from lxml import etree
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'src' / 'runtime'))
-from completion_schema import RNG_NS, from_rng  # noqa: E402
+RNG_NS = 'http://relaxng.org/ns/structure/1.0'
 
 SCHEMAS = {
     'tei': 'https://tei-c.org/release/xml/tei/custom/schema/relaxng/tei_all.rng',
@@ -54,13 +51,11 @@ def download(url: str, base: str, into: Path, seen: set[str]) -> Path:
 def main(names: list[str]) -> int:
     for name in names or SCHEMAS:
         url = SCHEMAS[name]
-        with tempfile.TemporaryDirectory() as tmp:
-            rng = download(url, url.rsplit('/', 1)[0] + '/', Path(tmp), set())
-            data = from_rng(rng)
-            subprocess.run(['node', str(ROOT / 'scripts' / 'salve-schemas.mjs'), name, str(rng)], check=True)
-        out = ROOT / 'schema' / f'{name}.json'
-        out.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
-        print(f'Wrote {out.relative_to(ROOT)} ({len(data["elements"])} elements) from {url}')
+        out = ROOT / 'schema' / name
+        shutil.rmtree(out, ignore_errors=True)
+        seen: set[str] = set()
+        rng = download(url, url.rsplit('/', 1)[0] + '/', out, seen)
+        print(f'Wrote {rng.relative_to(ROOT)} ({len(seen)} files) from {url}')
     return 0
 
 

@@ -1,14 +1,25 @@
-// ── which schema an XML file gets, for completion and for validation ──────
-// 1. an RNG in the project named by the file's <?xml-model?>, or by [editor] schema in opm.toml,
-//    which may also name the JSON runtime/completion_schema.py wrote from one (completion only)
-// 2. for TEI, DocBook and JATS, the whole of their schema (schema/<name>.json and
-//    <name>.salve.json, fetched once; npm run schemas writes them)
-import { completionFromRng } from '../runtime/opm.ts';
-import { validateText, type Problem, type SchemaSource } from '../runtime/validation.ts';
+// ── which RELAX NG schema an XML file gets, for validation and completion ──
+// 1. an RNG in the project named by the file's <?xml-model?>, or by [editor] schema in opm.toml
+// 2. for TEI, DocBook and JATS, the whole of their schema (schema/<name>/, npm run schemas
+//    downloads them)
+// The worker (runtime/validator.ts) turns either into a grammar once and keeps it.
+import { possibleAt, validateText, type Possible, type Problem, type SchemaSource } from '../runtime/validation.ts';
 import { config, dirOf, exists, normPath, projectFiles, readText } from '../project/fs.ts';
 import { tomlString } from '../project/toml.ts';
 import { on, state } from '../state.ts';
-import { completionSchema, type XmlSchema } from './completionSchema.ts';
+
+/** What the editor asks of a document's schema. */
+export interface Schema {
+  validate(text: string): Promise<Problem[]>;
+  complete(text: string, at: number): Promise<Possible | null>;
+}
+
+/** The main file of each default schema below schema/, as scripts/schemas.py downloads it. */
+const DEFAULTS: Record<string, string> = {
+  tei: 'tei/tei_all.rng',
+  docbook: 'docbook/docbook.rng',
+  jats: 'jats/JATS-archivearticle1-3-mathml3.rng',
+};
 
 /** The vocabulary of a document by namespace, root element or doctype; '' for none we know. */
 function vocabulary(text: string): string {
@@ -23,27 +34,10 @@ function vocabulary(text: string): string {
   return '';
 }
 
-const builtin = new Map<string, Promise<XmlSchema | null>>();
-function fullSchema(name: string): Promise<XmlSchema | null> {
-  if (!name) return Promise.resolve(null);
-  let s = builtin.get(name);
-  if (!s) {
-    s = fetch(new URL(`schema/${name}.json`, document.baseURI))
-      .then(r => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
-      .then(completionSchema)
-      .catch(e => { console.warn(`Autocompletion is off: schema/${name}.json could not be loaded:`, e); builtin.delete(name); return null; });
-    builtin.set(name, s);
-  }
-  return s;
-}
-
-/** Schemas read from project files; dropped whenever project files may have changed. */
-const fromProject = new Map<string, Promise<XmlSchema | null>>();
-/** Goes up with every such change, so the validation worker reads project RNGs afresh. */
+/** Goes up whenever project files may have changed, so the worker reads project RNGs afresh. */
 let generation = 0;
-const changed = () => { fromProject.clear(); generation++; };
-on(['project', 'files', 'config'], changed);
-on('edit', () => { if (/\.(rng|json)$/i.test(state.file)) changed(); });
+on(['project', 'files', 'config'], () => generation++);
+on('edit', () => { if (/\.rng$/i.test(state.file)) generation++; });
 
 /** The schema file for file p: an RNG from its own <?xml-model?> first, then opm.toml's [editor] schema. */
 function schemaFile(p: string, text: string): string {
@@ -55,32 +49,8 @@ function schemaFile(p: string, text: string): string {
     if (exists(path)) return path;
   }
   const configured = normPath(tomlString(config(), 'editor', 'schema'));
-  return configured && /\.(rng|json)$/i.test(configured) && exists(configured) ? configured : '';
+  return configured && /\.rng$/i.test(configured) && exists(configured) ? configured : '';
 }
-
-/** The completion schema for the XML file p, or null for plain XML. */
-export function schemaFor(p: string, text: string): Promise<XmlSchema | null> {
-  const file = schemaFile(p, text);
-  if (file) {
-    let s = fromProject.get(file);
-    if (!s) {
-      // after the editor has painted: a large grammar takes a moment to read
-      s = new Promise<XmlSchema | null>(resolve => setTimeout(() => {
-        try { resolve(completionSchema(/\.json$/i.test(file) ? JSON.parse(readText(file)) : completionFromRng(state.dir, file))); }
-        catch (e) { console.warn(`No autocompletion from ${file}:`, e); resolve(null); }
-      }, 50));
-      fromProject.set(file, s);
-    }
-    return s.then(r => r ?? fullSchema(vocabulary(text)));
-  }
-  return fullSchema(vocabulary(text));
-}
-
-/** A default grammar for validation, as JSON text. */
-const salveJson = (name: string): Promise<SchemaSource> =>
-  fetch(new URL(`schema/${name}.salve.json`, document.baseURI))
-    .then(r => { if (!r.ok) throw new Error(`schema/${name}.salve.json could not be loaded: ${r.status}`); return r.text(); })
-    .then(json => ({ json }));
 
 /** A project RNG, with every RNG in the project for its include and externalRef to find. */
 function projectRng(file: string): Promise<SchemaSource> {
@@ -89,14 +59,16 @@ function projectRng(file: string): Promise<SchemaSource> {
   return Promise.resolve({ main: file, files });
 }
 
-/** A check of file p's text against its RELAX NG schema, or null when it has none. */
-export function validatorFor(p: string, text: string): ((text: string) => Promise<Problem[]>) | null {
-  const file = schemaFile(p, text);
-  if (/\.rng$/i.test(file)) {
-    const key = `${state.dir}/${file}#${generation}`;
-    return t => validateText(key, () => projectRng(file), t);
-  }
-  const name = vocabulary(text);
-  if (!name) return null;
-  return t => validateText(`default:${name}`, () => salveJson(name), t);
+/** The schema of XML file p, or null when it has none. */
+export function schemaFor(p: string, text: string): Schema | null {
+  const file = schemaFile(p, text), name = vocabulary(text);
+  if (!file && !DEFAULTS[name]) return null;
+  const key = file ? `${state.dir}/${file}#${generation}` : `default:${name}`;
+  const source = file
+    ? () => projectRng(file)
+    : () => Promise.resolve({ url: new URL(`schema/${DEFAULTS[name]}`, document.baseURI).href });
+  return {
+    validate: t => validateText(key, source, t),
+    complete: (t, at) => possibleAt(key, source, t, at),
+  };
 }
