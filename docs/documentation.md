@@ -4,7 +4,7 @@ This page describes the parts of OPM Studio and what you can do with them. If yo
 
 ## Open the app
 
-Go to [OPM Studio](https://wolfgangmm.github.io/opm-studio/). The first visit downloads the processing environment, which can take a minute. Later visits load from the browser's cache and also work offline.
+Go to [OPM Studio](https://studio.e-editiones.org/). The first visit downloads the processing environment, which can take a minute. Later visits load from the browser's cache and also work offline.
 
 ## Project page
 

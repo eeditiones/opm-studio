@@ -20,7 +20,7 @@ By the end you will have:
 
 All you need is a recent web browser. Chrome, Edge, Firefox and Safari all work.
 
-Open [OPM Studio](https://wolfgangmm.github.io/opm-studio/). The very first visit downloads the processing environment, which may take a minute. Later visits load from the browser's cache and are much faster, even without an internet connection.
+Open [OPM Studio](https://studio.e-editiones.org/). The very first visit downloads the processing environment, which may take a minute. Later visits load from the browser's cache and are much faster, even without an internet connection.
 
 ## 1. Create a project
 
