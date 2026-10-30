@@ -1,6 +1,6 @@
 # OPM Studio
 
-Transform XML with the Open Processing Model, entirely in the browser. Runs the `opm` wheel under Pyodide (CPython in WebAssembly); there is no server-side code. Live at https://wolfgangmm.github.io/opm-studio/.
+Transform XML with the Open Processing Model, entirely in the browser. Runs the `opm` wheel under Pyodide (CPython in WebAssembly); there is no server-side code. Live at https://studio.e-editiones.org/.
 
     uv build --wheel ../tei-publisher-py -o dist     # the opm wheel the page installs
     npm install

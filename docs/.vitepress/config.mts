@@ -4,9 +4,9 @@ import { defineConfig } from 'vitepress';
 export default defineConfig({
   title: 'OPM Studio',
   description: 'Transform XML with the Open Processing Model, entirely in the browser',
-  base: '/opm-studio/docs/',
+  base: '/docs/',
   head: [
-    ['link', { rel: 'icon', href: '/opm-studio/docs/icon.svg', type: 'image/svg+xml' }],
+    ['link', { rel: 'icon', href: '/docs/icon.svg', type: 'image/svg+xml' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
     ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap' }],
@@ -18,7 +18,7 @@ export default defineConfig({
     nav: [
       { text: 'Tutorial', link: '/tutorials/first-project' },
       { text: 'Documentation', link: '/documentation' },
-      { text: 'Open the app', link: 'https://wolfgangmm.github.io/opm-studio/', target: '_self' },
+      { text: 'Open the app', link: 'https://studio.e-editiones.org/', target: '_self' },
     ],
     sidebar: [
       {

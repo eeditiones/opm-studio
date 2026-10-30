@@ -8,11 +8,11 @@ hero:
   image:
     src: /screenshots/workspace.png
     alt: OPM Studio editor with XML source and PDF preview
-    link: https://wolfgangmm.github.io/opm-studio/
+    link: https://studio.e-editiones.org/
   actions:
     - theme: brand
       text: Open the app
-      link: https://wolfgangmm.github.io/opm-studio/
+      link: https://studio.e-editiones.org/
       target: _self
     - theme: alt
       text: Your first project
