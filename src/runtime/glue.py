@@ -39,18 +39,40 @@ def copy_example(d, name, templates, base=False):
     return scaffold(InitOptions(directory=Path(d), example=name, templates=bool(templates), base=bool(base), bare=True)).sample_path
 
 
-def convert(root, xml, mode):
+_project_root = None
+
+
+def _use_project(root):
+    """Make root the project Python imports from.
+
+    The session outlives switching between projects, and most have an
+    `extensions` package, so the one imported first would shadow the next:
+    drop the previous project's import path and modules before root's are used.
+    """
+    global _project_root
+    import importlib
     root = Path(root)
+    if _project_root is not None and _project_root != root:
+        prefix = str(_project_root) + '/'
+        sys.path[:] = [p for p in sys.path if p != str(_project_root) and not p.startswith(prefix)]
+        for name, module in list(sys.modules.items()):
+            if (getattr(module, '__file__', None) or '').startswith(prefix):
+                del sys.modules[name]
+        importlib.invalidate_caches()
+    _project_root = root
     if str(root) not in sys.path:
         sys.path.insert(0, str(root))
+    return root
+
+
+def convert(root, xml, mode):
+    root = _use_project(root)
     return Project.load(root / 'opm.toml').transform(root / xml, mode=mode)
 
 
 def chunk(root, xml, out):
     """Chunk root/xml into HTML pages below out; returns the files written and the page to open first."""
-    root = Path(root)
-    if str(root) not in sys.path:
-        sys.path.insert(0, str(root))
+    root = _use_project(root)
     project = Project.load(root / 'opm.toml')
     if not project.config.chunking:
         raise ValueError('This project has no [chunking] section in opm.toml, so there is nothing to chunk.')
@@ -68,7 +90,7 @@ def page_site(root, mode, page, html, out):
     from opm.assets import copy_assets
     from opm.output_modes import output_mode
     from opm.transform import template_assets
-    root = Path(root)
+    root = _use_project(root)
     project = Project.load(root / 'opm.toml')
     assets = template_assets(output_mode(mode), project.config)
     if not assets:
@@ -115,9 +137,7 @@ def document_odd(root, odd, out, on_progress=None):
     """
     from opm import odd_schema
     from opm.document_site import build_document_site
-    root = Path(root)
-    if str(root) not in sys.path:
-        sys.path.insert(0, str(root))
+    root = _use_project(root)
     odd_schema._download_file = _no_download
     try:
         compiled = odd_schema.compile_schema(root / odd)

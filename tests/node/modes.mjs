@@ -41,6 +41,19 @@ for (const ex of ['jats', 'shakespeare']) {
   } else console.log('page assets', site.files.join(', '));
 }
 
+// projects side by side in /projects, as the studio keeps them: each has its own
+// `extensions` package, and the one imported first must not shadow the next
+{
+  const results = [];
+  for (const ex of ['serafin', 'escher']) {
+    const dir = '/projects/' + ex;
+    const sample = py.globals.get('copy_example')(dir, ex, true);
+    try { results.push(`${ex} ${py.globals.get('convert')(dir, sample, 'web').length}`); }
+    catch (e) { results.push(`${ex} FAIL ${String(e).split('\n').slice(-2).join(' ')}`); process.exitCode = 1; }
+  }
+  console.log('project switch', results.join(', '));
+}
+
 // ODD documentation through glue.py, as the ODD editor's Document button calls it
 for (const [ex, odd] of [['jats', 'odd/jats.odd'], ['shakespeare', null]]) {
   const dir = '/proj-' + ex;
