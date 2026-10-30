@@ -2,7 +2,7 @@ import { EditorView, basicSetup } from 'codemirror';
 import { EditorState, Compartment, type Extension } from '@codemirror/state';
 import { keymap, lineNumbers, Decoration, ViewPlugin, MatchDecorator, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 import { indentWithTab } from '@codemirror/commands';
-import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+import { HighlightStyle, indentUnit, syntaxHighlighting } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
 import { xml, xmlLanguage } from '@codemirror/lang-xml';
 import { linter, lintGutter, nextDiagnostic, type Diagnostic } from '@codemirror/lint';
@@ -77,6 +77,17 @@ const editors = new Set<EditorView>();
 /** Have the editors measure their lines again, after a font or size change. */
 export const remeasureEditors = (): void => editors.forEach(v => v.requestMeasure());
 
+/** How the editors lay out text: spaces per indentation step, and whether long lines wrap. */
+export interface Layout { tabSize: number; wrap: boolean }
+let layout: Layout = { tabSize: 4, wrap: false };
+const layoutConf = new Compartment();
+const layoutExt = (l: Layout): Extension => [EditorState.tabSize.of(l.tabSize), indentUnit.of(' '.repeat(l.tabSize)), l.wrap ? EditorView.lineWrapping : []];
+/** Lay out the text of all editors so, now and for each text shown later. */
+export function setLayout(l: Layout): void {
+  layout = l;
+  editors.forEach(v => v.dispatch({ effects: layoutConf.reconfigure(layoutExt(l)) }));
+}
+
 export function createEditor(parent: HTMLElement, onChange: () => void, onValidity: (v: Validity) => void = () => {}): Editor {
   const lang = new Compartment(), schemaExt = new Compartment();
   /** A state of its own for each text shown, so undo never reaches back into the one before. */
@@ -84,7 +95,7 @@ export function createEditor(parent: HTMLElement, onChange: () => void, onValidi
     doc: text,
     extensions: [
       basicSetup, keymap.of([indentWithTab]), theme, syntaxHighlighting(highlightStyle),
-      lang.of(kind ? LANGS[kind]() : []), schemaExt.of([]),
+      lang.of(kind ? LANGS[kind]() : []), schemaExt.of([]), layoutConf.of(layoutExt(layout)),
       kind === 'xml' || kind === 'odd' ? xmlCommands() : [],
       EditorView.updateListener.of(u => { if (u.docChanged) onChange(); }),
     ],

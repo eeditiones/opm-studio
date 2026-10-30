@@ -5,7 +5,7 @@ const APP = `opm-app-${VERSION}`, CDN = 'opm-cdn';
 // chunked output, put there by the page (src/ui/previews/site.ts) and served as if from a server
 const PREVIEW = 'opm-preview', PREVIEW_PATH = new URL('preview/', self.registration.scope).pathname;
 const SHELL = ['./', 'index.html', 'style.css', 'manifest.webmanifest',
-  'icon-192.png', 'icon-512.png', 'dist/app.js', 'dist/docworker.js', 'dist/validator.js', 'dist/open_processing_model-0.9.0-py3-none-any.whl'];
+  'icon-192.png', 'icon-512.png', 'dist/app.js', 'dist/docworker.js', 'dist/validator.js', 'dist/open_processing_model-0.10.0-py3-none-any.whl'];
 const CDN_HOSTS = ['cdn.jsdelivr.net', 'files.pythonhosted.org', 'pypi.org', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', e => {

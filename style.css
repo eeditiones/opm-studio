@@ -35,9 +35,9 @@ a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 /* header */
-.topbar { height: 48px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
+.topbar { height: 56px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
 .topbar img { width: 28px; height: 28px; }
-.topbar .brand { font-weight: 600; font-size: 14px; white-space: nowrap; }
+.topbar .brand { font-weight: 600; font-size: 15px; white-space: nowrap; }
 .topbar .vsep { width: 1px; height: 18px; background: var(--line); }
 .topbar .sub { color: var(--muted); white-space: nowrap; }
 .topbar .slash { color: var(--faint); }
@@ -298,6 +298,7 @@ main { flex: 1; min-height: 0; position: relative; display: grid; grid-template-
 #prefs-dlg .field { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
 #prefs-dlg .field[hidden] { display: none; }
 #prefs-dlg .field label { width: 6.5rem; flex: none; color: var(--muted); }
+#prefs-dlg .field label.check { width: auto; display: flex; align-items: center; gap: 6px; color: var(--fg); }
 #prefs-dlg .field select, #prefs-dlg .field input[type=text] { flex: 1; min-width: 0; }
 #prefs-dlg .size { display: flex; align-items: center; gap: 6px; color: var(--muted); }
 #prefs-dlg input[type=number] { width: 5rem; height: 30px; padding: 0 .5rem; font: inherit; border: 1px solid var(--btn-line); border-radius: 6px; background: var(--panel); color: var(--fg); }
@@ -343,7 +344,7 @@ main { flex: 1; min-height: 0; position: relative; display: grid; grid-template-
 odd-editor { flex: 1; min-height: 0; display: grid; grid-template-columns: 188px minmax(0, 1fr); background: var(--panel); }
 odd-editor[hidden] { display: none; }
 odd-editor button { font: inherit; color: inherit; }
-odd-editor input[type=text], odd-editor input[type=search], odd-editor select, odd-editor textarea { font: 12.5px var(--sans); height: 30px; padding: 0 8px; border: 1px solid var(--btn-line); border-radius: 6px; background: var(--panel); color: var(--fg); min-width: 0; }
+odd-editor input[type=text], odd-editor input[type=search], odd-editor select, odd-editor textarea { font: var(--odd-size, 12.5px) var(--sans); height: calc(var(--odd-size, 12.5px) + 17.5px); padding: 0 8px; border: 1px solid var(--btn-line); border-radius: 6px; background: var(--panel); color: var(--fg); min-width: 0; }
 odd-editor input:focus, odd-editor select:focus, odd-editor textarea:focus { outline: none; border-color: var(--accent); }
 odd-editor textarea { height: auto; padding: 6px 8px; font-family: var(--mono); resize: vertical; width: 100%; }
 odd-editor .spacer { flex: 1; }
@@ -375,8 +376,9 @@ odd-editor .empty-main, odd-editor .empty-models { color: var(--faint); padding:
 odd-editor .spec-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-bottom: 10px; }
 odd-editor .spec-head .ident { font: 600 15px var(--mono) !important; width: 180px; }
 odd-editor .spec-head .mode { display: flex; align-items: center; gap: 6px; font: 600 10.5px var(--sans); letter-spacing: .07em; color: var(--muted); }
-odd-editor .spec-head > button:not(.icon) { height: 28px; padding: 0 9px; border: 1px solid var(--btn-line); border-radius: 6px; background: var(--panel); font-size: 12px; font-weight: 500; cursor: pointer; }
-odd-editor .spec-head > button:not(.icon):hover { border-color: var(--accent); color: var(--accent); }
+odd-editor .spec-actions { display: flex; align-items: center; gap: 8px; }
+odd-editor .spec-actions > button:not(.icon) { height: 28px; padding: 0 9px; border: 1px solid var(--btn-line); border-radius: 6px; background: var(--panel); font-size: 12px; font-weight: 500; cursor: pointer; }
+odd-editor .spec-actions > button:not(.icon):hover { border-color: var(--accent); color: var(--accent); }
 odd-editor button.icon { width: 26px; height: 26px; padding: 0; display: inline-grid; place-items: center; border: 0; border-radius: 5px; background: transparent; color: var(--muted); cursor: pointer; flex: none; }
 odd-editor button.icon:hover { background: var(--hover); color: var(--fg); }
 odd-editor button.icon.danger:hover { color: var(--err); }

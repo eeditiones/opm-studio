@@ -1,6 +1,6 @@
 import { LitElement, html } from "lit";
 import { EditorView, drawSelection, keymap } from "@codemirror/view";
-import { EditorState } from "@codemirror/state";
+import { Compartment, EditorState, type Extension } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { xml } from "@codemirror/lang-xml";
 import { css } from "@codemirror/lang-css";
@@ -13,6 +13,20 @@ import {
 import { highlightStyle } from "../codemirror.ts";
 import { XML_COMMANDS, xmlCommands } from "../xmlCommands.ts";
 
+/** Highlighting and commands for a field's language. */
+function languageSupport(language: CmField["language"]): Extension {
+  switch (language) {
+    case "xml":
+      return [xml(), xmlCommands()];
+    case "css":
+      return css();
+    case "xquery":
+      return StreamLanguage.define(xQuery);
+    default:
+      return [];
+  }
+}
+
 /** Form fields look like the app's inputs and share the editor's syntax colours. */
 const fieldTheme = EditorView.theme({
   "&": {
@@ -20,9 +34,9 @@ const fieldTheme = EditorView.theme({
     backgroundColor: "var(--panel)",
     border: "1px solid var(--btn-line)",
     borderRadius: "6px",
-    fontSize: "12px",
+    fontSize: "var(--odd-size, 12.5px)",
   },
-  ".cm-content": { fontFamily: "var(--mono)", caretColor: "var(--fg)", padding: "5px 0" },
+  ".cm-content": { fontFamily: "var(--editor-font, var(--mono))", caretColor: "var(--fg)", padding: "5px 0" },
   ".cm-line": { padding: "0 8px" },
   "&.cm-focused": { outline: "none", borderColor: "var(--accent)" },
   ".cm-cursor": { borderLeftColor: "var(--fg)" },
@@ -47,6 +61,7 @@ export class CmField extends LitElement {
   declare value: string;
   declare language: "xml" | "css" | "xquery" | "text";
   private view?: EditorView;
+  private languageConf = new Compartment();
   /** Suppress cm-change while syncing the document from the value property. */
   private syncing = false;
 
@@ -82,14 +97,8 @@ export class CmField extends LitElement {
           );
         }
       }),
+      this.languageConf.of(languageSupport(this.language)),
     ];
-    if (this.language === "xml") {
-      extensions.push(xml(), xmlCommands());
-    } else if (this.language === "css") {
-      extensions.push(css());
-    } else if (this.language === "xquery") {
-      extensions.push(StreamLanguage.define(xQuery));
-    }
     this.view = new EditorView({
       parent: host,
       state: EditorState.create({ doc: this.value ?? "", extensions }),
@@ -97,6 +106,12 @@ export class CmField extends LitElement {
   }
 
   updated(changed: Map<string, unknown>) {
+    // A rule's output can change from an XML format to a plain-text one
+    if (changed.has("language") && changed.get("language") !== undefined && this.view) {
+      this.view.dispatch({
+        effects: this.languageConf.reconfigure(languageSupport(this.language)),
+      });
+    }
     if (changed.has("value") && this.view) {
       const current = this.view.state.doc.toString();
       // The ODD is re-read after each save and parsed values are trimmed; don't

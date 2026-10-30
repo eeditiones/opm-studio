@@ -113,3 +113,25 @@ test('updateSpec on a spec that starts mid-line leaves the preceding markup alon
   assert.deepEqual(parseOdd(out).elementSpecs[1].models.map(m => m.behaviour), ['inline', 'block']);
   assert.doesNotMatch(out.slice(out.indexOf('ident="emph"')), /<\/elementSpec>\s*<model/);
 });
+
+const WRAPPED = `<TEI xmlns="http://www.tei-c.org/ns/1.0"><text><body>
+  <schemaSpec ident="custom">
+    <elementSpec ident="p" mode="change">
+      <desc>A paragraph,
+        spread over <gi>two</gi> lines.</desc>
+      <model behaviour="paragraph">
+        <desc>Rule
+          description</desc>
+      </model>
+    </elementSpec>
+  </schemaSpec>
+</body></text></TEI>`;
+
+test('a desc spread over lines reads as one line and is kept as is until edited', () => {
+  const spec = parseOdd(WRAPPED).elementSpecs[0];
+  assert.equal(spec.desc, 'A paragraph, spread over <gi>two</gi> lines.');
+  assert.equal(spec.models[0].desc, 'Rule description');
+  assert.equal(updateSpec(WRAPPED, 0, spec), WRAPPED);
+  spec.desc = 'Changed';
+  assert.match(updateSpec(WRAPPED, 0, spec), /<desc>Changed<\/desc>\n {6}<model/);
+});

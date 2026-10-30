@@ -18,7 +18,7 @@ Two options control which templates a new project gets. **Copy all templates** a
 
 **Saved in this browser** lists your projects. **Open** reopens one, ✕ deletes it. **Import .zip…** turns an exported project into a new one, and **Open folder…** opens a project folder on disk (see [Directory synchronization](#directory-synchronization)).
 
-Projects are stored in the browser and saved as you type. Clearing the browser's site data removes them, so use **Export .zip** in the top bar to keep a copy. The zip is an ordinary opm project: unzip and run it with the `opm` command-line tool, or bring it back with **Import .zip…**.
+Projects are stored in the browser and saved as you type. Clearing the browser's site data removes them, so use **Export .zip** (the download arrow in the top bar) to keep a copy. The zip is an ordinary opm project: unzip and run it with the `opm` command-line tool, or bring it back with **Import .zip…**.
 
 While a project is open, click its name in the top bar to switch to another project or to return to this page.
 
@@ -111,13 +111,18 @@ Firefox and Safari do not allow web pages to write to folders, so these options 
 
 ## Editing XML
 
-Three commands help with markup. They are available from the editor's context menu (right click; hold <kbd>Shift</kbd> for the browser's own menu), by keyboard, and in the ODD editor from the buttons above a template.
+Four commands help with markup. They are available from the editor's context menu (right click; hold <kbd>Shift</kbd> for the browser's own menu), by keyboard, and in the ODD editor all but splitting also from the buttons above a template.
 
 | Command | Windows / Linux | Mac |
 |---|---|---|
 | Surround the selection with an element | <kbd>Ctrl</kbd>+<kbd>E</kbd> | <kbd>⌘</kbd>+<kbd>E</kbd> |
 | Select the element around the cursor; press again for its parent | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> | <kbd>⇧</kbd>+<kbd>⌘</kbd>+<kbd>E</kbd> |
+| Split the element around the cursor in two, at the cursor | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd> | <kbd>⇧</kbd>+<kbd>⌘</kbd>+<kbd>Return</kbd> |
 | Remove the tags of the element around the cursor, keeping its content | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd> | <kbd>⇧</kbd>+<kbd>⌘</kbd>+<kbd>X</kbd> |
+
+The preferences (the sliders icon in the top bar) set the editor's font and size, how many spaces one indentation step takes (4 unless you change it), and whether long lines wrap. They are kept in your browser.
+
+**Split element** ends the element at the cursor and starts another of the same name, with the same attributes except `xml:id`, which must stay unique. Use it to break a paragraph in two, for example.
 
 **Surround with element** asks for the element's name below the text. When the document has a schema, it lists the elements the schema allows at that point, with a short description of each: type to narrow the list, choose with the arrow keys and press <kbd>Enter</kbd>. Only elements from the list are accepted. To add attributes, press <kbd>Tab</kbd> to complete the name and type them after it, e.g. `persName ref="#gorbachev"`. Without a schema, any name may be typed.
 

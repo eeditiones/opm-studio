@@ -25,7 +25,7 @@ features:
     details: Includes all required libraries. No installation needed.
   - title: Cross-media
     details: Web, print, EPUB, Markdown, Word, Typst to PDF, multi-page sites, all from the same specification.
-  - title: Visual editor
+  - title: Visual editor for ODD
     details: Edit element specs and models in a visual editor or as XML source, and generate documentation for your specs.
 ---
 

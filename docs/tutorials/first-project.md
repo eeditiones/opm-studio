@@ -116,7 +116,7 @@ To go back to the sample, click `sample.xml` in the file list.
 
 ## 6. Take it with you
 
-Your project is saved in the browser as you type. To keep a copy elsewhere, click **Export .zip** in the top bar. The zip contains an ordinary opm project, which you can bring back into OPM Studio later, share with a colleague, or run with the `opm` command-line tool.
+Your project is saved in the browser as you type. To keep a copy elsewhere, click **Export .zip**, the download arrow in the top bar. The zip contains an ordinary opm project, which you can bring back into OPM Studio later, share with a colleague, or run with the `opm` command-line tool.
 
 To save the output itself, use the download button above the output. For **epub** and **docx**, which cannot be previewed in the browser, this is the only option, so click one of them now and open the result in your e-book reader or word processor.
 

@@ -1,4 +1,4 @@
-// ── XML editing commands: surround with, select and remove an element ─────
+// ── XML editing commands: surround with, select, split and remove an element
 // Shared by the source editor and the ODD editor's template fields. Each
 // command has a shortcut and an entry in the editor's context menu.
 import { EditorSelection, Facet, Prec, StateEffect, StateField, type EditorState, type Extension, type SelectionRange } from '@codemirror/state';
@@ -10,7 +10,8 @@ const isMac = /Mac|iP(hone|ad)/.test(navigator.platform);
 
 /** A CodeMirror key name as the user sees it, e.g. Mod-Shift-e → ⇧⌘E or Ctrl+Shift+E. */
 export const keyLabel = (key: string): string => {
-  const parts = key.split('-'), last = parts.pop()!.toUpperCase();
+  const parts = key.split('-'), name = parts.pop()!;
+  const last = name.length === 1 ? name.toUpperCase() : isMac && name === 'Enter' ? '↩' : name;
   if (isMac) return parts.map(p => ({ Mod: '⌘', Shift: '⇧', Alt: '⌥', Ctrl: '⌃' })[p] ?? p).sort((a, b) => '⌃⌥⇧⌘'.indexOf(a) - '⌃⌥⇧⌘'.indexOf(b)).join('') + last;
   return [...parts.map(p => (p === 'Mod' ? 'Ctrl' : p)), last].join('+');
 };
@@ -58,6 +59,29 @@ export const removeElement: Command = view => {
   }));
   return true;
 }
+
+/**
+ * Split the element around the cursor in two at the cursor: its end tag, then
+ * its start tag again, with the same attributes but for an id, which has to stay unique.
+ */
+export const splitElement: Command = view => {
+  if (view.state.readOnly) return false;
+  const tree = syntaxTree(view.state);
+  view.dispatch(view.state.changeByRange(range => {
+    const pos = range.head;
+    // the innermost element whose content holds the cursor, not one whose tag does
+    for (let cur: ReturnType<typeof tree.resolveInner> | null = tree.resolveInner(pos, -1); cur; cur = cur.parent) {
+      const open = cur.firstChild, close = cur.lastChild;
+      if (cur.name !== 'Element' || open?.name !== 'OpenTag' || close?.name !== 'CloseTag' || pos < open.to || pos > close.from) continue;
+      const name = view.state.sliceDoc(open.getChild('TagName')?.from, open.getChild('TagName')?.to);
+      const start = view.state.sliceDoc(open.from, open.to).replace(/\s(xml:)?id\s*=\s*("[^"]*"|'[^']*')/g, '');
+      const insert = `</${name}>${start}`;
+      return { changes: { from: pos, insert }, range: EditorSelection.cursor(pos + insert.length) };
+    }
+    return { range };
+  }), { scrollIntoView: true });
+  return true;
+};
 
 /** Wrap each selection in an element named `tag`, keeping the text selected. */
 function surround(view: EditorView, tag: string): void {
@@ -172,6 +196,7 @@ interface Entry { label: string; key?: string; run: (view: EditorView) => unknow
 export const XML_COMMANDS = {
   surround: { label: 'Surround with element…', key: 'Mod-e', run: surroundWithElement },
   select: { label: 'Select element', key: 'Mod-Shift-e', run: selectElement },
+  split: { label: 'Split element', key: 'Mod-Shift-Enter', run: splitElement },
   remove: { label: 'Remove element tags', key: 'Mod-Shift-x', run: removeElement },
 } satisfies Record<string, Entry>;
 

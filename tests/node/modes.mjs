@@ -2,7 +2,7 @@ import { loadPyodide } from 'pyodide';
 import fs from 'node:fs';
 const py = await loadPyodide();
 await py.loadPackage(['micropip','lxml','jinja2','pygments','platformdirs']);
-const w='open_processing_model-0.9.0-py3-none-any.whl';
+const w='open_processing_model-0.10.0-py3-none-any.whl';
 py.FS.writeFile('/tmp/'+w, fs.readFileSync('dist/'+w));
 await py.runPythonAsync(`
 import micropip
