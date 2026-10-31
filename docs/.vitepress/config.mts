@@ -34,7 +34,7 @@ export default defineConfig({
         ],
       },
     ],
-    socialLinks: [{ icon: 'github', link: 'https://github.com/eeditiones' }],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/eeditiones/opm-studio' }],
     search: { provider: 'local' },
     footer: { message: 'Released under the AGPL-3.0-or-later license.' },
   },
