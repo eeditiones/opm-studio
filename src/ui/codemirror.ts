@@ -65,6 +65,8 @@ export interface Editor {
   useSchema(schema: Schema | null): void;
   /** Select the next problem the check found, after the cursor. */
   nextProblem(): void;
+  /** Put the cursor on a 1-based line and column, and bring it into view. */
+  goTo(line: number, column?: number): void;
 }
 
 /** How the text shown stands against its schema: not checked, being checked, or the number of problems. */
@@ -139,6 +141,12 @@ export function createEditor(parent: HTMLElement, onChange: () => void, onValidi
     nextProblem() {
       view.focus();
       nextDiagnostic(view);
+    },
+    goTo(line, column = 1) {
+      const doc = view.state.doc, l = doc.line(Math.min(Math.max(line, 1), doc.lines));
+      const pos = l.from + Math.min(Math.max(column - 1, 0), l.length);
+      view.focus();
+      view.dispatch({ selection: { anchor: pos }, effects: EditorView.scrollIntoView(pos, { y: 'center' }) });
     },
     replace(text) {
       const old = view.state.doc.toString();

@@ -61,6 +61,7 @@ select, .btn, input[type=text] { font: inherit; padding: 0 .6rem; height: 30px; 
 .btn.small { height: 24px; padding: 0 .5rem; font-size: 12px; }
 .btn.dl { display: flex; align-items: center; gap: 6px; height: 28px; border: 0; background: var(--accent); color: var(--accent-fg); white-space: nowrap; }
 .btn.dl:hover { filter: brightness(.9); }
+.btn.dl[hidden] { display: none; }
 /* in a narrow output pane the template menu gives way, not the buttons beside it */
 #tpl { min-width: 60px; flex: 1 1 auto; text-overflow: ellipsis; }
 .btn.dl { flex: none; }
@@ -228,7 +229,21 @@ main { flex: 1; min-height: 0; position: relative; display: grid; grid-template-
 #out iframe { width: 100%; height: 100%; border: 0; background: #fff; }
 #out pre { margin: 0; padding: .75rem 1rem; width: 100%; overflow: auto; font: 12.5px/20px var(--mono); white-space: pre-wrap; word-break: break-word; }
 #out .source { flex: 1; min-width: 0; min-height: 0; }
-#out pre.err { color: var(--err); }
+.error-card { box-sizing: border-box; align-self: flex-start; width: min(640px, calc(100% - 2rem)); margin: 2rem auto; padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); font-size: 13px; }
+.error-head { display: flex; align-items: center; gap: 8px; }
+.error-head strong { font-size: 14px; font-weight: 600; }
+.error-ico { flex: none; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; color: var(--err); background: color-mix(in srgb, var(--err) 14%, transparent); font-weight: 700; font-size: 12px; }
+.error-msg { margin: 0; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.error-where { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.error-where code { min-width: 0; font: 400 12px var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.error-where .btn { flex: none; }
+.error-code { overflow-x: auto; padding: 6px 0; border: 1px solid var(--line-2); border-radius: 6px; background: var(--panel-2); font: 12px/20px var(--mono); }
+.error-code > div { display: flex; width: max-content; min-width: 100%; padding-right: 10px; white-space: pre; }
+.error-code .n { flex: none; width: 3.5em; padding-right: 1em; text-align: right; color: var(--faint); user-select: none; }
+.error-code .hit { background: color-mix(in srgb, var(--err) 12%, transparent); }
+.error-code .hit .n { color: var(--err); font-weight: 600; }
+.error-trace summary { cursor: pointer; font-size: 12px; color: var(--muted); }
+#out .error-trace pre { margin-top: 6px; padding: 0; max-height: 240px; color: var(--muted); font-size: 11.5px; line-height: 18px; }
 .filecard { margin: 2rem auto; align-self: flex-start; text-align: center; padding: 2rem 3rem; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
 .filecard .ico { font-size: 40px; }
 .filecard .name { font-family: var(--mono); margin: .5rem 0 .2rem; }

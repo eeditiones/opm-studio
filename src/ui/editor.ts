@@ -1,5 +1,5 @@
 // ── source editor: tabs, breadcrumbs, CodeMirror or a binary preview ──────
-import { closeTab, documentOdd, openFile } from '../actions.ts';
+import { closeTab, documentOdd, openFile, showFile } from '../actions.ts';
 import { IMAGES } from '../config.ts';
 import { base, dirOf, exists, extOf, isOdd, normPath, readBytes, readText, writeFile } from '../project/fs.ts';
 import { roleOf } from '../project/pipeline.ts';
@@ -151,6 +151,13 @@ function renderValidity(v: Validity): void {
   b.dataset.state = v === 'checking' ? 'checking' : v ? 'invalid' : 'valid';
   b.textContent = v === 'checking' ? 'Checking…' : v ? `${v === 200 ? '200+' : v} ${v === 1 ? 'error' : 'errors'}` : 'Valid';
   b.title = v === 'checking' ? 'Checking the document against its schema' : v ? 'Not valid against its schema. Click to go to the next problem (F8)' : 'Valid against its schema';
+}
+
+/** Show a line of a file in the source editor, without changing the document being transformed. */
+export function showLine(p: string, line: number, column?: number): void {
+  if (isOdd(p)) setOddView('source');
+  if (p !== state.file) showFile(p);
+  editor.goTo(line, column);
 }
 
 export function initEditor(): void {

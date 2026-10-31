@@ -1,16 +1,18 @@
 // ── output pane: mode tabs, template menu, transform and result ───────────
 import { setMode } from '../actions.ts';
 import { EXT, PREVIEW, TEMPLATE_KIND, type Mode } from '../config.ts';
-import { base, config, oddPath, projectFiles, readText, snapshot, writeFile } from '../project/fs.ts';
+import { base, config, exists, oddPath, projectFiles, readText, snapshot, writeFile } from '../project/fs.ts';
 import { setToml, tomlString, unsetToml } from '../project/toml.ts';
+import { isText, toZip } from '../project/zip.ts';
 import { chunk, convert, pageSite, ready } from '../runtime/opm.ts';
 import { documentOdd } from '../runtime/docs.ts';
+import { excerpt, reportError } from '../runtime/errorReport.ts';
 import { py } from '../runtime/pyodide.ts';
-import { toZip } from '../project/zip.ts';
 import { emit, on, state } from '../state.ts';
 import type { EditorView } from 'codemirror';
 import { createViewer, type EditorKind } from './codemirror.ts';
 import { $, download, el } from './dom.ts';
+import { showLine } from './editor.ts';
 import { DOWNLOAD, PRINT } from './icons.ts';
 import { markdownFrame } from './previews/markdown.ts';
 import { compilePdf, typstLoaded } from './previews/pdf.ts';
@@ -43,7 +45,7 @@ async function run(): Promise<void> {
   if (!ready() || !state.project || state.docs) return;
   if (!state.xml) {
     last = null; hideDownload();
-    showError('This project has no XML source yet. Upload one, or add a file under data/.');
+    showError('Upload one, or add a file under data/.', 'This project has no XML source yet');
     setStatus('No XML source', 'err');
     return;
   }
@@ -58,7 +60,7 @@ async function run(): Promise<void> {
     if (!showResult(last)) setStatus('Up to date · ' + Math.round(performance.now() - t) + ' ms');
   } catch (err) {
     last = null; hideDownload();
-    showError(String(err).split('\n').filter(Boolean).slice(-4).join('\n'));
+    showError(String(err), 'The transformation failed');
     setStatus('Error', 'err');
   }
   running = false;
@@ -105,7 +107,7 @@ async function runDocs(): Promise<void> {
     }
   } catch (err) {
     if (my === seq && state.docs === odd) {
-      showError('Could not document ' + odd + ':\n' + String((err as Error).message ?? err).split('\n').filter(Boolean).slice(-4).join('\n'));
+      showError(String((err as Error).message ?? err), 'Could not document ' + odd);
       setStatus('Error', 'err');
     }
   }
@@ -120,9 +122,40 @@ export function clearOut(): void {
   for (const c of [...$('out').children]) if (c.id !== 'bar') c.remove();
   $('out').classList.remove('stage');
 }
-function showError(text: string): void {
+/** Show what went wrong and, when it is in a project file, where, with a way to get there. */
+function showError(text: string, fallback?: string): void {
   clearOut();
-  $('out').append(el('pre', { className: 'err', textContent: text }));
+  const r = reportError(text, state.dir, fallback);
+  const card = el('div', { className: 'error-card' });
+  card.setAttribute('role', 'alert');
+  const head = el('div', { className: 'error-head' });
+  head.append(el('span', { className: 'error-ico', textContent: '!' }), el('strong', { textContent: r.title }));
+  card.append(head, el('p', { className: 'error-msg', textContent: r.message }));
+  const { file, line, column } = r;
+  if (file && line) {
+    const where = el('div', { className: 'error-where' });
+    where.append(el('code', { textContent: file + ':' + line + (column ? ':' + column : '') }),
+      el('button', { className: 'btn small', textContent: 'Go to line ' + line, onclick: () => showLine(file, line, column) }));
+    card.append(where);
+    if (exists(file) && isText(file)) {
+      const lines = excerpt(readText(file), line, column);
+      if (lines.length) {
+        const code = el('div', { className: 'error-code' });
+        for (const l of lines) {
+          const row = el('div', { className: l.hit ? 'hit' : '' });
+          row.append(el('span', { className: 'n', textContent: String(l.n) }), el('span', { textContent: l.text }));
+          code.append(row);
+        }
+        card.append(code);
+      }
+    }
+  }
+  if (r.trace) {
+    const more = el('details', { className: 'error-trace' });
+    more.append(el('summary', { textContent: 'Technical details' }), el('pre', { textContent: r.trace }));
+    card.append(more);
+  }
+  $('out').append(card);
 }
 const hideDownload = () => { $('download').hidden = true; hidePrint(); };
 function setDownload(file: string, onclick: () => void): void {
@@ -213,7 +246,7 @@ function showPage(mode: Mode, name: string, html: string, key: string, y: number
   const page = name.replace(/\.[^.]+$/, '') + '.html', out = '/tmp/opm-page/' + state.project;
   let s;
   try { s = pageSite(state.dir, mode, page, preview, out); }
-  catch (err) { showError(String(err).split('\n').filter(Boolean).slice(-2).join('\n')); return false; }
+  catch (err) { showError(String(err), 'The preview could not be built'); return false; }
   const show = (frame: HTMLIFrameElement) => {
     // regenerated: back to where the reader was (paged layout changes heights, so skip print)
     if (y && !paged) frame.addEventListener('load', () => frame.contentWindow?.scrollTo(0, y), { once: true });
@@ -260,7 +293,7 @@ function showSite(s: Site): void {
   const my = seq;
   frame.addEventListener('load', () => {
     if (my === seq && !servedByWorker(frame)) showError('The preview frame bypassed the service worker, so its pages could not be served. '
-      + 'This happens after a hard reload, or with “Bypass for network” on in the developer tools. Reload the page normally.');
+      + 'This happens after a hard reload, or with “Bypass for network” on in the developer tools. Reload the page normally.', 'The preview could not be shown');
   }, { once: true });
   site = { frame, base: s.base };
   showOnPaper(frame);
@@ -297,7 +330,7 @@ async function showPdf(name: string, source: string, my: number): Promise<void> 
     setStatus('PDF ready');
   } catch (err) {
     if (my !== seq) return;
-    showError('PDF compilation failed:\n' + String((err as Error).message || err));
+    showError(String((err as Error).message || err), 'PDF compilation failed');
     setStatus('Error', 'err');
   }
 }

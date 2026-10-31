@@ -27,6 +27,10 @@ features:
     details: Web, print, EPUB, Markdown, Word, Typst to PDF, multi-page sites, all from the same specification.
   - title: Visual editor for ODD
     details: Edit element specs and models in a visual editor or as XML source, and generate documentation for your specs.
+  - title: Validating XML editor
+    details: Schema-based editing with context-sensitive completions.
+  - title: Works with any schema
+    details: Supports TEI, Docbook and JATS out of the box, but other schemas will work as well if you write an ODD.
 ---
 
 ## What is _OPM Studio_?
